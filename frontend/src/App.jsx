@@ -1,7 +1,9 @@
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { HashRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { NotificationProvider } from './context/NotificationContext';
+import ToastRegion from './components/ToastRegion';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -9,20 +11,19 @@ import StudentDashboard from './pages/StudentDashboard';
 import RecruiterDashboard from './pages/RecruiterDashboard';
 import SettingsPage from './pages/SettingsPage';
 import NotFoundPage from './pages/NotFoundPage';
-
-function RootRedirect() {
-  const { user, isAuthenticated } = useAuth();
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
-  return <Navigate to={user?.role === 'Recruiter' ? '/recruiter' : '/student'} replace />;
-}
+import JobDetailsPage from './pages/JobDetailsPage';
+import StudentProfilePage from './pages/StudentProfilePage';
+import EditPortfolioPage from './pages/EditPortfolioPage';
+import LandingPage from './pages/LandingPage';
 
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <NotificationProvider>
         <HashRouter>
           <Routes>
-            <Route path="/" element={<RootRedirect />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             
@@ -34,6 +35,10 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/jobs/:jobId" element={<ProtectedRoute allowedRole="Student"><JobDetailsPage /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute allowedRole="Student"><StudentProfilePage ownProfile /></ProtectedRoute>} />
+            <Route path="/portfolio/edit" element={<ProtectedRoute allowedRole="Student"><EditPortfolioPage /></ProtectedRoute>} />
+            <Route path="/students/:studentId" element={<ProtectedRoute><StudentProfilePage /></ProtectedRoute>} />
 
             <Route
               path="/recruiter"
@@ -48,7 +53,9 @@ export default function App() {
 
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          <ToastRegion />
         </HashRouter>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

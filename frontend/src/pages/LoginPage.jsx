@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
-import { Home, Briefcase, Eye, EyeOff, ArrowRight, Sun, Moon, UserCheck, GraduationCap, Users, KeyRound, X } from 'lucide-react';
+import { Home, Briefcase, Eye, EyeOff, ArrowRight, UserCheck, GraduationCap, Users, KeyRound, X } from 'lucide-react';
 
 export default function LoginPage() {
   const [role, setRole] = useState('Student');
@@ -29,7 +28,6 @@ export default function LoginPage() {
   const [forgotError, setForgotError] = useState(false);
 
   const { login } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -167,18 +165,14 @@ export default function LoginPage() {
           </button>
           {demoOpen && <div id="demo-accounts" className="demo-menu-panel">
             <button type="button" onClick={() => handleFillDemo('Student', 'rahul@example.com', 'password123')}><GraduationCap size={14} /><span>Rahul<span>Student</span></span></button>
-            <button type="button" onClick={() => handleFillDemo('Recruiter', 'gurpreet@drteacafe.example', 'password123', 'Dr Tea Cafe')}><Briefcase size={14} /><span>Dr Tea Cafe<span>Recruiter</span></span></button>
+            <button type="button" onClick={() => handleFillDemo('Recruiter', 'gurpreet@tech.example', 'password123', 'Spy Tech')}><Briefcase size={14} /><span>Spy Tech<span>Recruiter</span></span></button>
           </div>}
         </div>
-        <button type="button" className="auth-theme-toggle" onClick={toggleTheme} aria-label="Toggle theme" title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}>
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-        </button>
       </div>
 
       {/* Left Welcome Panel */}
       <section className="welcome-panel">
-        <Link className="brand" to="/login">
+        <Link className="brand" to="/" aria-label="Go to Kairos landing page" onClick={(event) => { event.preventDefault(); window.location.hash = '/'; }}>
           <img src={`${import.meta.env.BASE_URL}favicon.png`} alt="Kairos" className="brand-logo-img" />
           <span>Kairos<span className="brand-dot">.</span></span>
         </Link>

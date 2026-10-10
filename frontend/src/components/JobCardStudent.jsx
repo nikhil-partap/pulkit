@@ -1,12 +1,11 @@
 import React from 'react';
-import { MapPin, Clock, IndianRupee, Mail, Star, Check, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BadgeCheck, MapPin, Clock, Star, Sparkles } from 'lucide-react';
 
 export default function JobCardStudent({
   job,
-  isApplied,
   isSaved,
   application,
-  onToggleApply,
   onToggleSave,
 }) {
   const vacanciesCount = Number(job.vacancies || 1);
@@ -14,7 +13,7 @@ export default function JobCardStudent({
   const isAccepted = application?.status === 'Accepted';
 
   return (
-    <article className={`student-job-card ${isAccepted ? 'card-accepted-glow' : ''}`}>
+    <article className={`student-job-card compact-job-card ${isAccepted ? 'card-accepted-glow' : ''}`}>
       <div className="job-card-top">
         <span className="status active">Live now</span>
         {isAccepted ? (
@@ -26,13 +25,18 @@ export default function JobCardStudent({
         )}
       </div>
 
-      <h3>{job.title}</h3>
-      <p className="company-line">{job.company || 'Kairos Employer'}</p>
+      <div className="compact-job-heading">
+        <span className="company-mark">{(job.company || 'Kairos Employer').split(' ').map((word) => word[0]).join('').slice(0, 2)}</span>
+        <div>
+          <h3>{job.title}</h3>
+          <p className="company-line">{job.company || 'Kairos Employer'} <BadgeCheck size={14} aria-label="Verified employer" /></p>
+        </div>
+      </div>
 
       <div className="job-facts">
         <span>
           <MapPin size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />
-          {job.location} ({job.type || 'On-site'})
+          {job.location}
         </span>
         <span>
           <Clock size={11} style={{ marginRight: '3px', verticalAlign: 'middle' }} />
@@ -42,26 +46,7 @@ export default function JobCardStudent({
           {job.pay?.startsWith('₹') || job.pay?.startsWith('Rs') ? job.pay : `₹${job.pay}`} / hour
         </span>
       </div>
-
-      <p className="job-description-text">{job.description}</p>
-
-      {/* Recruiter Contact Details */}
-      <div className="recruiter-contact-box">
-        <strong>Employer Contact Info</strong>
-        <div>
-          Posted by: <b>{job.recruiter_name || 'Recruiter'}</b> ({job.recruiter_role || 'Hiring Manager'})
-        </div>
-        <div>
-          Email:{' '}
-          {job.recruiter_email ? (
-            <a href={`mailto:${job.recruiter_email}`}>
-              {job.recruiter_email}
-            </a>
-          ) : (
-            'Contact via Kairos'
-          )}
-        </div>
-      </div>
+      <p className="compact-job-note">{job.type || 'On-site'} · Posted recently</p>
 
       {isAccepted && (
         <div className="student-accepted-callout">
@@ -71,37 +56,13 @@ export default function JobCardStudent({
       )}
 
       <div className="job-card-actions">
-        {isAccepted ? (
-          <button
-            type="button"
-            className="interest-button apply-button saved"
-            disabled
-            style={{ flex: 2, marginTop: 0 }}
-          >
-            <Check size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Application Accepted
-          </button>
-        ) : (
-          <button
-            type="button"
-            className={`interest-button apply-button ${isApplied ? 'saved' : ''}`}
-            onClick={() => onToggleApply(job.id)}
-            style={{ flex: 2, marginTop: 0 }}
-          >
-            {isApplied ? (
-              <>
-                <Check size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> Applied (Under Review)
-              </>
-            ) : (
-              'Apply Now →'
-            )}
-          </button>
-        )}
+        <Link to={`/jobs/${job.id}`} className="job-details-link">View details <span>→</span></Link>
 
         <button
           type="button"
           className={`interest-button save-button ${isSaved ? 'saved' : ''}`}
           onClick={() => onToggleSave(job.id)}
-          style={{ flex: 1, marginTop: 0 }}
+          style={{ marginTop: 0 }}
         >
           <Star size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} /> {isSaved ? 'Saved' : 'Save'}
         </button>

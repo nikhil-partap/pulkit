@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
-import { Home, Briefcase, ArrowRight, Sun, Moon, Check } from 'lucide-react';
+import { Home, Briefcase, ArrowRight, Check } from 'lucide-react';
 
 export default function RegisterPage() {
   const [role, setRole] = useState('Student');
@@ -28,7 +27,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -107,18 +105,6 @@ export default function RegisterPage() {
 
   return (
     <main className="login-page register-page">
-      <div className="auth-controls">
-        <button
-          type="button"
-          className="auth-theme-toggle"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
-        >
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
-          <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-        </button>
-      </div>
 
       {/* Left Welcome Panel */}
       <section className="welcome-panel">

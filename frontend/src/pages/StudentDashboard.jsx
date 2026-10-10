@@ -1,19 +1,31 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import JobCardStudent from '../components/JobCardStudent';
+import StudentSidebar from '../components/StudentSidebar';
+import SkillExchangePage from './SkillExchangePage';
+import CreateSessionPage from './CreateSessionPage';
+import MySessionsPage from './MySessionsPage';
+import BookedSessionsPage from './BookedSessionsPage';
+import MyApplicationsPage from './MyApplicationsPage';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { loadActiveJobs } from '../store/jobsSlice';
 import { Search, Sparkles, Bookmark, RefreshCw, FileText } from 'lucide-react';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  const [jobs, setJobs] = useState([]);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const jobs = useSelector((state) => state.jobs.active);
   const [savedJobIds, setSavedJobIds] = useState([]);
   const [studentApplications, setStudentApplications] = useState([]);
   const [filterTab, setFilterTab] = useState('all'); // 'all' | 'accepted' | 'applied' | 'saved'
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activePage, setActivePage] = useState('jobs');
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Student';
 
@@ -22,12 +34,11 @@ export default function StudentDashboard() {
     setLoading(true);
     setError('');
     try {
-      const [jobsRes, savedRes, appsRes] = await Promise.all([
-        api.getActiveJobs(),
+      const [, savedRes, appsRes] = await Promise.all([
+        dispatch(loadActiveJobs()).unwrap(),
         api.getSavedJobIds(user.id),
         api.getStudentApplications(user.id),
       ]);
-      setJobs(Array.isArray(jobsRes) ? jobsRes : []);
       setSavedJobIds(Array.isArray(savedRes) ? savedRes : []);
       setStudentApplications(Array.isArray(appsRes) ? appsRes : []);
     } catch (err) {
@@ -126,7 +137,9 @@ export default function StudentDashboard() {
     <div className="dashboard-screen student-screen">
       <Navbar workspaceLabel="Student workspace" />
 
-      <main className="dashboard-main">
+      <div className="student-workspace-layout">
+        <StudentSidebar activePage={activePage} onChange={(page) => page === 'settings' ? navigate('/settings') : setActivePage(page)} />
+        {activePage === 'skills' ? <SkillExchangePage firstName={firstName} user={user} /> : activePage === 'booked-sessions' ? <BookedSessionsPage user={user} onNavigate={setActivePage} /> : activePage === 'create-session' ? <CreateSessionPage user={user} onNavigate={setActivePage} /> : activePage === 'my-sessions' ? <MySessionsPage user={user} onNavigate={setActivePage} /> : activePage === 'applications' ? <MyApplicationsPage user={user} onNavigate={setActivePage} /> : <main className="dashboard-main student-dashboard-main">
         {/* Hero Section */}
         <section className="student-hero">
           <div>
@@ -307,7 +320,8 @@ export default function StudentDashboard() {
             <p>Employers accept your application and contact you directly.</p>
           </div>
         </section>
-      </main>
+        </main>}
+      </div>
     </div>
   );
 }

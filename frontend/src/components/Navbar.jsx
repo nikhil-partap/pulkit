@@ -1,55 +1,34 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { Settings, Sun, Moon, LogOut } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Bell, CheckCheck, Info } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
 
 export default function Navbar({ workspaceLabel }) {
-  const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const navigate = useNavigate();
+  const { unreadCount } = useNotifications();
+  const { notifications, markRead, markAllRead } = useNotifications();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
 
-  const handleSignOut = () => {
-    logout();
-    navigate('/login');
-  };
+  useEffect(() => {
+    const close = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
 
   return (
     <header className="dashboard-header">
-      <Link to={user?.role === 'Recruiter' ? '/recruiter' : '/student'} className="dashboard-brand">
+      <Link to="/" className="dashboard-brand" aria-label="Go to Kairos landing page" onClick={(event) => { event.preventDefault(); window.location.hash = '/'; }}>
         <img src={`${import.meta.env.BASE_URL}favicon.png`} alt="Kairos" className="dashboard-brand-logo-img" />
         <span>Kairos<span className="brand-dot">.</span></span>
       </Link>
+      {workspaceLabel && <span className="workspace-label">{workspaceLabel}</span>}
 
-      {workspaceLabel && (
-        <span className="workspace-label">{workspaceLabel}</span>
-      )}
-
-      <div className="header-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <button
-          className="theme-button"
-          type="button"
-          onClick={() => navigate('/settings')}
-          aria-label="Edit profile"
-          title="Edit profile & settings"
-        >
-          <Settings size={17} />
-        </button>
-
-        <button
-          className="theme-button"
-          type="button"
-          onClick={toggleTheme}
-          aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-          title="Switch theme"
-        >
-          {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
-        </button>
-
-        <button className="profile-button" type="button" onClick={handleSignOut}>
-          <LogOut size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
-          Sign out
-        </button>
+      {/* Notifications */}
+      <div className="header-notification-wrap" ref={menuRef}>
+        <button className="header-notification-link" type="button" onClick={() => setOpen((current) => !current)} aria-label="Open notifications" aria-expanded={open}><Bell size={18} />{unreadCount > 0 && <b>{unreadCount}</b>}</button>
+        {open && <div className="notification-popover"><div className="notification-popover-heading"><div><strong>Notifications</strong><span>{unreadCount ? `${unreadCount} unread` : 'You\u2019re all caught up'}</span></div>{unreadCount > 0 && <button type="button" onClick={markAllRead}><CheckCheck size={14} /> Read all</button>}</div><div className="notification-popover-list">{notifications.length ? notifications.slice(0, 5).map((item) => <button type="button" className={item.read ? 'popover-notification' : 'popover-notification unread'} key={item.id} onClick={() => markRead(item.id)}><Info size={14} /><span><strong>{item.title}</strong><small>{item.body}</small></span></button>) : <p>No notifications yet.</p>}</div></div>}
       </div>
     </header>
   );

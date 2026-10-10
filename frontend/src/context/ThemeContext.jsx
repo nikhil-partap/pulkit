@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() => localStorage.getItem('kairos-theme') || 'light');
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -11,6 +11,7 @@ export function ThemeProvider({ children }) {
     } else {
       document.body.classList.remove('dark-theme');
     }
+    localStorage.setItem('kairos-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
@@ -18,7 +19,7 @@ export function ThemeProvider({ children }) {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

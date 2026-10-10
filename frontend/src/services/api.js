@@ -1,16 +1,23 @@
 // In-Memory Mock Service for Kairos (State-driven for React evaluations)
 
 const INITIAL_STUDENTS = [
-  { id: 1, full_name: 'Rahul Sharma', email: 'rahul@example.com', password: 'password123', college: 'Chitkara University, Punjab Campus', course: 'BCA', availability: 'Weekdays' },
+  { id: 1, full_name: 'Rahul Sharma', email: 'rahul@example.com', password: 'password123', college: 'Chitkara University, Punjab Campus', course: 'BCA', availability: 'Weekdays', bio: 'Frontend-focused BCA student who enjoys turning ideas into useful, accessible interfaces. Currently building experience through part-time roles and peer learning.', skills: ['React', 'JavaScript', 'CSS', 'Figma', 'Git'], resume_label: 'Rahul_Sharma_Resume.pdf', projects: [{ title: 'Campus event finder', stack: 'React · REST API', description: 'A responsive student event discovery app with search and category filters.', repoUrl: 'https://github.com/', liveUrl: '' }, { title: 'Cafe ordering interface', stack: 'HTML · CSS · JavaScript', description: 'A mobile-first ordering flow designed for quick counter pickups.', repoUrl: '', liveUrl: '' }] },
 ];
 
 const INITIAL_RECRUITERS = [
-  { recruiter_id: 1, full_name: 'Gurpreet Singh', email: 'gurpreet@drteacafe.example', password: 'password123', company_name: 'Dr Tea Cafe', job_title: 'Cafe Manager', industry: 'Food & hospitality' },
+  { recruiter_id: 1, full_name: 'Gurpreet Singh', email: 'gurpreet@tech.example', password: 'password123', company_name: 'Spy Tech', job_title: 'Manager', industry: 'Tech' },
 ];
 
 const INITIAL_JOBS = [
-  { id: 1, recruiter_id: 1, title: 'Cafe Counter Assistant', work_type: 'On-site', location: 'Village Jansla, near Chitkara University', hours: '15-20 hours', pay: '250', vacancies: 2, description: 'Handle orders, serve beverages, and keep the counter ready during student rush hours. Morning and evening shifts available.', status: 'Active', created_at: new Date(Date.now() - 6 * 86400000).toISOString() },
-  { id: 2, recruiter_id: 1, title: 'Weekend Cafe Helper', work_type: 'On-site', location: 'Village Jansla, near Chitkara University', hours: '6-10 hours', pay: '220', vacancies: 1, description: 'Help with stock checks, counter clean-up, and takeaway orders on weekend mornings and evenings.', status: 'Active', created_at: new Date(Date.now() - 2 * 86400000).toISOString() },
+  { id: 1, recruiter_id: 1, title: 'Frontend Developer', work_type: 'Hybrid', location: 'Village Jansla, near Chitkara University', hours: '15-20 hours', pay: '250', vacancies: 2, description: 'Helps to develop Frontend Using AI tools, must have good Design knowledge.', status: 'Active', created_at: new Date(Date.now() - 6 * 86400000).toISOString() },
+  { id: 2, recruiter_id: 1, title: 'Database Manager', work_type: 'Hybrid', location: 'Village Jansla, near Chitkara University', hours: '6-10 hours', pay: '220', vacancies: 1, description: 'Helps in database bugs finding and must know about database queries and optimisations.', status: 'Active', created_at: new Date(Date.now() - 2 * 86400000).toISOString() },
+];
+
+const INITIAL_SKILL_SESSIONS = [
+  { id: 101, student_id: 1, title: 'React hooks, made practical', teacher: 'Rahul Sharma', topic: 'Development', level: 'Intermediate', time: 'Wednesday · 5:00 PM', duration: '60 min', seats: 3, color: 'teal', description: 'Build a small counter and learn when to use useState, useEffect, and custom hooks.' },
+  { id: 102, student_id: 21, title: 'Figma for first portfolios', teacher: 'Ananya Sharma', topic: 'Design', level: 'Beginner', time: 'Saturday · 11:00 AM', duration: '75 min', seats: 4, color: 'gold', description: 'Learn a simple workflow to design your first portfolio screen with Figma.' },
+  { id: 103, student_id: 22, title: 'JavaScript interview patterns', teacher: 'Rohan Mehta', topic: 'Development', level: 'Intermediate', time: 'Sunday · 4:00 PM', duration: '60 min', seats: 2, color: 'blue', description: 'Practice common array, string, and object questions with a calm problem-solving approach.' },
+  { id: 104, student_id: 23, title: 'Build your personal brand', teacher: 'Meera Kapoor', topic: 'Career', level: 'All levels', time: 'Monday · 6:30 PM', duration: '45 min', seats: 7, color: 'coral', description: 'Turn your projects and interests into a profile that recruiters can understand quickly.' },
 ];
 
 // In-Memory Store
@@ -19,6 +26,9 @@ let recruiters = [...INITIAL_RECRUITERS];
 let jobs = [...INITIAL_JOBS];
 let applications = [];
 let savedJobs = [];
+let skillSessions = [...INITIAL_SKILL_SESSIONS];
+let sessionBookings = [];
+const uploadedResumes = new Map();
 
 const asyncWrap = (fn) =>
   new Promise((resolve, reject) => {
@@ -31,7 +41,7 @@ const asyncWrap = (fn) =>
     }, 40);
   });
 
-export const api = {
+const mockApi = {
   // Auth
   login: async ({ email, password, role, company = '' }) =>
     asyncWrap(() => {
@@ -89,6 +99,40 @@ export const api = {
         if (!r) throw new Error('Recruiter not found.');
         return { name: r.full_name, email: r.email, company: r.company_name, jobTitle: r.job_title, industry: r.industry };
       }
+    }),
+
+  getStudentPortfolio: async (studentId) =>
+    asyncWrap(() => {
+      const student = students.find((item) => Number(item.id) === Number(studentId));
+      if (!student) throw new Error('Student profile not found.');
+      return {
+        id: student.id, name: student.full_name, email: student.email, college: student.college, course: student.course,
+        availability: student.availability, bio: student.bio || 'This student has not added a bio yet.', skills: student.skills || [],
+        resumeLabel: student.resume_label || 'Resume available on request', projects: student.projects || [],
+        resumeFile: uploadedResumes.get(Number(student.id)) || null,
+      };
+    }),
+
+  updateStudentPortfolio: async (studentId, portfolio) =>
+    asyncWrap(() => {
+      const student = students.find((item) => Number(item.id) === Number(studentId));
+      if (!student) throw new Error('Student profile not found.');
+      student.bio = portfolio.bio.trim();
+      student.skills = portfolio.skills;
+      student.resume_label = portfolio.resumeLabel.trim();
+      student.projects = portfolio.projects;
+      return { success: true };
+    }),
+
+  uploadStudentResume: async (studentId, file) =>
+    asyncWrap(() => {
+      if (!file) throw new Error('Choose a resume file first.');
+      if (file.size > 5 * 1024 * 1024) throw new Error('Resume must be 5 MB or smaller.');
+      const student = students.find((item) => Number(item.id) === Number(studentId));
+      if (!student) throw new Error('Student profile not found.');
+      uploadedResumes.set(Number(studentId), file);
+      student.resume_label = file.name;
+      return { name: file.name };
     }),
 
   updateProfile: async ({ userId, role, profile }) =>
@@ -274,11 +318,69 @@ export const api = {
       return { message: 'Job removed.' };
     }),
 
+  // Skill Exchange Actions
+  getSkillSessions: async () => asyncWrap(() => skillSessions.map((session) => ({ ...session }))),
+
+  getStudentSkillSessions: async (studentId) =>
+    asyncWrap(() => skillSessions.filter((session) => Number(session.student_id) === Number(studentId)).map((session) => ({ ...session }))),
+
+  createSkillSession: async ({ studentId, teacher, title, topic, level, time, duration, seats, description }) =>
+    asyncWrap(() => {
+      const newSession = {
+        id: Date.now(), student_id: Number(studentId), teacher: teacher.trim(), title: title.trim(), topic, level,
+        time: time.trim(), duration: duration.trim(), seats: Number(seats), description: description.trim(), color: 'teal',
+      };
+      skillSessions.unshift(newSession);
+      return { ...newSession };
+    }),
+
+  updateSkillSession: async (sessionId, studentId, updates) =>
+    asyncWrap(() => {
+      const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
+      if (!session || Number(session.student_id) !== Number(studentId)) throw new Error('Session not found or you do not have permission to edit it.');
+      Object.assign(session, { ...updates, title: updates.title.trim(), time: updates.time.trim(), duration: updates.duration.trim(), description: updates.description.trim(), seats: Number(updates.seats) });
+      return { ...session };
+    }),
+
+  deleteSkillSession: async (sessionId, studentId) =>
+    asyncWrap(() => {
+      const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
+      if (!session || Number(session.student_id) !== Number(studentId)) throw new Error('Session not found or you do not have permission to delete it.');
+      skillSessions = skillSessions.filter((item) => Number(item.id) !== Number(sessionId));
+      return { message: 'Session deleted.' };
+    }),
+
+  getBookedSkillSessions: async (studentId) =>
+    asyncWrap(() => {
+      const bookedIds = new Set(sessionBookings.filter((booking) => Number(booking.student_id) === Number(studentId)).map((booking) => Number(booking.session_id)));
+      return skillSessions.filter((session) => bookedIds.has(Number(session.id))).map((session) => ({ ...session }));
+    }),
+
+  bookSkillSession: async (studentId, sessionId) =>
+    asyncWrap(() => {
+      const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
+      if (!session) throw new Error('This session is no longer available.');
+      if (Number(session.student_id) === Number(studentId)) throw new Error('You cannot book your own session.');
+      if (sessionBookings.some((booking) => Number(booking.student_id) === Number(studentId) && Number(booking.session_id) === Number(sessionId))) return { message: 'Already booked.' };
+      sessionBookings.push({ id: Date.now(), student_id: Number(studentId), session_id: Number(sessionId) });
+      return { message: 'Session booked.' };
+    }),
+
+  cancelSkillSessionBooking: async (studentId, sessionId) =>
+    asyncWrap(() => {
+      sessionBookings = sessionBookings.filter((booking) => !(Number(booking.student_id) === Number(studentId) && Number(booking.session_id) === Number(sessionId)));
+      return { message: 'Booking cancelled.' };
+    }),
+
   resetToDemoData: () => {
     students = [...INITIAL_STUDENTS];
     recruiters = [...INITIAL_RECRUITERS];
     jobs = [...INITIAL_JOBS];
     applications = [];
     savedJobs = [];
+    skillSessions = [...INITIAL_SKILL_SESSIONS];
+    sessionBookings = [];
   },
 };
+
+export const api = mockApi;
