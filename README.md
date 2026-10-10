@@ -45,16 +45,16 @@ The project includes pre-configured demo accounts for both roles with instant on
 | **Role** | Student |
 | **Email** | `rahul@example.com` |
 | **Password** | `password123` |
-| **Profile** | Rahul Sharma • Chitkara University • BCA |
+| **Profile** | Rahul Sharma • Chitkara University, Punjab Campus • BCA |
 
 ### 2. Recruiter Account
 | Field | Value |
 | :--- | :--- |
 | **Role** | Recruiter |
-| **Company** | `Dr Tea Cafe` |
-| **Email** | `gurpreet@drteacafe.example` |
+| **Company** | `Spy Tech` |
+| **Email** | `gurpreet@tech.example` |
 | **Password** | `password123` |
-| **Profile** | Gurpreet Singh • Cafe Manager • Food & hospitality |
+| **Profile** | Gurpreet Singh • Manager • Spy Tech |
 
 ---
 
