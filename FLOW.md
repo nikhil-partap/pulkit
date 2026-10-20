@@ -78,22 +78,31 @@ sequenceDiagram
     participant API as api.js (Mock Service)
     participant Recruiter as RecruiterDashboard
 
-    Student->>UI: Enter search term or select filter tab (All/Saved/Applied/Accepted)
+    Student->>UI: Enter search term or select filter tab (All/Saved/Applied/Accepted/Rejected)
     UI->>UI: Filter jobs locally using useMemo
     Student->>UI: Click "Apply" on Job Card
     UI->>API: api.applyToJob(studentId, jobId)
     API-->>UI: Return updated application status ("Applied")
     UI->>UI: Trigger toast: "Application submitted"
     UI->>Recruiter: Emit CustomEvent 'kairos_application_updated'
-    Note over Recruiter: Recruiter view automatically refreshes to display new applicant!
+    Note over Recruiter: Recruiter view automatically updates pending applicant count!
+    
+    alt Recruiter Accepts
+        Recruiter->>API: api.updateApplicationStatus(appId, recruiterId, 'Accepted')
+        API-->>UI: Student sees green "Accepted" badge & contact details
+    else Recruiter Rejects
+        Recruiter->>API: api.updateApplicationStatus(appId, recruiterId, 'Rejected')
+        API-->>UI: Student sees red "Rejected" badge, callout, and counter
+    end
 ```
 
-1. **Browse Roles**: Students filter through campus and hybrid jobs by keyword, category, or status tab.
-2. **Detailed View**: Clicking a job navigates to `/#/jobs/:jobId` with full description, recruiter company details, and compensation.
+1. **Browse Roles**: Students filter through campus and hybrid jobs by keyword, category, or status tab (`All`, `Saved`, `Applied`, `Accepted`, `Rejected`).
+2. **Detailed View**: Clicking a job navigates to `/#/jobs/:jobId` with full description, recruiter company details, and compensation. If rejected, the button is disabled with a notice that the application was declined.
 3. **Save for Later**: Clicking the bookmark icon toggles saved jobs instantly.
 4. **My Applications Tab**: Tracks all submitted roles, displaying color-coded status badges:
-   - `Applied / Under Review` (Gold)
+   - `Applied / Under Review` (Gold badge)
    - `Accepted` (Green badge with employer contact instructions)
+   - `Rejected` (Red badge with respectful feedback notice)
    - `Saved` (Blue badge)
 
 ### B. Peer Skill Exchange Flow
@@ -103,6 +112,9 @@ stateDiagram-v2
     BrowseSessions --> BookSession: Click "Join session"
     BookSession --> BookedList: Session added to "Booked sessions"
     
+    BrowseSessions --> ViewProfile: Click "View profile" in card footer
+    ViewProfile --> BrowseSessions: Click "Back to Skill Exchange" (/student?tab=skills)
+
     BrowseSessions --> CreateSession: Open "Create session"
     CreateSession --> HostedList: Publish new session (Title, Topic, Time, Seats)
     HostedList --> EditSession: Edit title, time, or capacity
@@ -110,13 +122,15 @@ stateDiagram-v2
 ```
 
 1. **Browse Sessions**: Students discover micro-learning workshops hosted by fellow students (e.g., React Hooks, Figma UI, Interview Prep).
-2. **Book Seats**: One-click booking with seat counter deduction.
-3. **Booked Sessions**: View upcoming schedules with cancel option.
-4. **Host a Session**: Form to teach a skill with customizable tags, duration, and seat limits.
-5. **Manage Sessions**: Edit details or remove sessions anytime.
+2. **View Host Profile**: Every session card features a dedicated **"View profile"** button in its footer action row. Navigating to the student teacher's profile preserves the referrer state (`from: 'skills'`), allowing the back button to return directly to the Skill Exchange tab rather than defaulting to job listings.
+3. **Book Seats**: One-click booking with real-time seat counter deduction.
+4. **Booked Sessions**: View upcoming schedules with cancel option.
+5. **Host a Session**: Form to teach a skill with customizable tags, duration, and seat limits.
+6. **Manage Sessions**: Edit details or remove sessions anytime.
 
 ### C. Student Portfolio & Resume Flow
 - Accessible from sidebar: **Edit portfolio** (`/#/portfolio/edit`) and **View portfolio** (`/#/profile`).
+- Clean, focused interface without distracting tips.
 - Students can update their Bio, add taggable Skills, link GitHub/Live projects, and upload a PDF resume file.
 - When applying to jobs, recruiters see the student's name, college, course, bio, and resume link.
 
@@ -139,7 +153,7 @@ flowchart LR
         - Active filter toggle
         - Pause / Activate button
         - Remove listing button
-        - Live Applicant Cards"]
+        - Clean Applicant counts"]
     end
 
     Form -->|Click 'Publish Job'| Action[dispatch(createJob)]
@@ -147,8 +161,8 @@ flowchart LR
 ```
 
 1. **Sidebar Navigation**:
-   - **My listings**: Displays the merged two-column layout.
-   - **Applicants**: Dedicated candidate review pipeline.
+   - **My listings**: Displays the merged two-column layout with posted job listings and fast job creation form.
+   - **Applicants**: Dedicated candidate review pipeline with live **pending reviews counter badge**.
 2. **Publishing a Role**:
    - Recruiter completes the job creation form on the left.
    - On submit, job is validated and added to the store via Redux `createJob`.
@@ -168,16 +182,24 @@ sequenceDiagram
     actor Student
 
     Recruiter->>UI: Open "Applicants" tab
-    UI->>UI: Displays pending candidate list across all jobs
-    Recruiter->>UI: Click "Accept" on applicant card
-    UI->>API: api.updateApplicationStatus(appId, recruiterId, 'Accepted')
-    API-->>UI: Status updated to 'Accepted'
-    UI->>Notif: Add toast & notification: "Applicant accepted"
+    UI->>UI: Displays pending review counter badge and candidate list
+    alt Recruiter Accepts Candidate
+        Recruiter->>UI: Click "Accept"
+        UI->>API: api.updateApplicationStatus(appId, recruiterId, 'Accepted')
+        API-->>UI: Status locked to 'Accepted' (Decision is final)
+        UI->>Notif: Add toast & notification: "Applicant accepted"
+    else Recruiter Rejects Candidate
+        Recruiter->>UI: Click "Reject"
+        UI->>API: api.updateApplicationStatus(appId, recruiterId, 'Rejected')
+        API-->>UI: Status locked to 'Rejected' (Decision is final)
+        UI->>Notif: Add toast: "Application rejected"
+    end
     UI->>Student: Dispatch 'kairos_application_updated' event
-    Note over Student: Student dashboard reflects "Accepted" status badge!
+    Note over Student: Student dashboard immediately updates with status badge!
 ```
 
-- Recruiters can accept student candidates either directly on the job card or in the candidate pipeline.
+- **Final, Irreversible Decisions**: Once an application is marked **Accepted** or **Rejected**, the decision is permanent. Action buttons disappear to prevent accidental status toggling.
+- **Dedicated Pending Reviews Count**: Pending reviews are shown strictly on the **Applicants** tab banner and the **Applicants** sidebar nav badge, keeping "My listings" clean and focused.
 - Quick `mailto:` button allows direct email communication with accepted students.
 
 ---
@@ -186,7 +208,7 @@ sequenceDiagram
 
 The app maintains synchronized state across multiple browser tabs and components without a heavy websocket server:
 - **Custom Event Bus**: `window.dispatchEvent(new CustomEvent('kairos_application_updated'))` fires whenever an application status changes or a new job is posted.
-- **Storage Sync**: `window.addEventListener('storage', ...)` syncs session and application states if the recruiter and student workspaces are opened in different tabs or windows.
+- **Storage Sync**: `window.addEventListener('storage', ...)` and `localStorage` persistence sync session and application states (`kairos_applications`) if the recruiter and student workspaces are opened in different tabs or windows.
 
 ---
 
@@ -194,7 +216,7 @@ The app maintains synchronized state across multiple browser tabs and components
 
 1. **Sidebar Settings Trigger**:
    - Available in both Student and Recruiter sidebars at the bottom.
-   - Clicking opens the embedded settings drawer.
+   - Clicking opens the embedded settings drawer with an **Account** link.
 2. **Appearance Switch**:
    - Clicking **Light** or **Dark** updates `ThemeContext`.
    - Adds/removes the `.dark-theme` class on `document.body` and saves preference to `localStorage`.

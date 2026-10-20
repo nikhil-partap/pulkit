@@ -61,15 +61,16 @@ The project includes pre-configured demo accounts for both roles with instant on
 ## 🌟 Core Features
 
 ### 🎓 Student Workspace (`/#/student`)
-- **Live Job Discovery**: Browse campus and local part-time opportunities with search, status filters (All, Applied, Accepted, Saved), pay rates, and hours.
-- **Job Details & Apply**: Dedicated role overview with quick apply and instant application status updates.
-- **My Applications**: Track all submitted roles with color-coded status badges (`Under Review` vs `Accepted`).
+- **Live Job Discovery**: Browse campus and local part-time opportunities with search, status filters (All, Applied, Accepted, Rejected, Saved), pay rates, and hours.
+- **Job Details & Apply**: Dedicated role overview with quick apply, live status updates, and clear feedback if an application was accepted or declined.
+- **My Applications**: Track all submitted roles with color-coded status badges (`Under Review`, `Accepted`, or `Rejected`).
 - **Student Portfolio & Resume**:
-  - Bio, academic credentials, and taggable skill badges.
+  - Clean bio, academic credentials, and taggable skill badges (no intrusive tips).
   - Showcase GitHub and live project links.
   - Upload and download resume files.
 - **Peer Skill Exchange**:
   - Discover micro-workshops hosted by fellow students (React, Figma, Interview prep).
+  - View host profile directly from the session card footer with seamless return navigation back to Skill Exchange.
   - One-click seat booking and booking cancellation.
   - Host your own skill session with custom schedule, tags, and capacity.
 
@@ -78,18 +79,22 @@ The project includes pre-configured demo accounts for both roles with instant on
   - **Left**: Post a part-time role form (title, work arrangement, location, hours, pay rate, vacancies, description).
   - **Right**: Posted job listings panel with filter toggle (`Active only` vs `Show all`).
 - **Manage Listings**: Pause/activate listings or remove jobs.
-- **Candidate Pipeline**: Review student applicants across all jobs, inspect college/course details, accept candidates, and email directly.
+- **Candidate Pipeline**:
+  - Review student applicants across all jobs, inspect college/course details, and view portfolios.
+  - **Accept or Reject Decisions**: One-click actions with final, locked decisions to prevent accidental status changes.
+  - **Pending Reviews Tracking**: Prominent pending reviews badge on the Applicants navigation tab and candidate pipeline hero, keeping the job listings uncluttered.
+  - Quick email communication with candidates.
 
 ### 🎨 Design & Cross-Cutting Features
 - **Sidebar Settings**:
   - Expandable settings menu at the bottom of both student and recruiter sidebars.
-  - Edit profile link, **Light / Dark theme** toggles, and sign out.
+  - Quick **Account** settings link, portfolio shortcuts, **Light / Dark theme** toggles, and sign out.
   - Keyboard shortcut: <kbd>Ctrl</kbd> + <kbd>B</kbd> to quickly log out.
 - **Notification System**:
-  - In-app floating toast alerts for actions (job published, applicant accepted, session booked).
+  - In-app floating toast alerts for actions (job published, applicant accepted/rejected, session booked).
   - Top header notification popover with unread counter and "Read all" action.
 - **Cross-Component Synchronization**:
-  - Custom event bus synchronizes application updates and listings across tabs and components without page reloads.
+  - Custom event bus and `localStorage` persistence synchronize application updates and listings across tabs and components without page reloads.
 
 ---
 

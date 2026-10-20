@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import JobCardStudent from '../components/JobCardStudent';
 import StudentSidebar from '../components/StudentSidebar';
@@ -12,12 +12,14 @@ import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadActiveJobs } from '../store/jobsSlice';
-import { Search, Sparkles, Bookmark, RefreshCw, FileText } from 'lucide-react';
+import { Search, Sparkles, Bookmark, RefreshCw, FileText, XCircle } from 'lucide-react';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const jobs = useSelector((state) => state.jobs.active);
   const [savedJobIds, setSavedJobIds] = useState([]);
   const [studentApplications, setStudentApplications] = useState([]);
@@ -25,7 +27,24 @@ export default function StudentDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activePage, setActivePage] = useState('jobs');
+  const initialTab = searchParams.get('tab') || searchParams.get('page') || location.state?.activePage || 'jobs';
+  const [activePage, setActivePage] = useState(initialTab);
+
+  useEffect(() => {
+    const pageFromUrl = searchParams.get('tab') || searchParams.get('page') || location.state?.activePage;
+    if (pageFromUrl && pageFromUrl !== activePage) {
+      setActivePage(pageFromUrl);
+    }
+  }, [searchParams, location.state]);
+
+  const handlePageChange = (page) => {
+    if (page === 'settings') {
+      navigate('/settings');
+      return;
+    }
+    setActivePage(page);
+    setSearchParams(page === 'jobs' ? {} : { tab: page }, { replace: true });
+  };
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Student';
 
@@ -77,6 +96,12 @@ export default function StudentDashboard() {
       .map((a) => Number(a.job_id));
   }, [studentApplications]);
 
+  const rejectedJobIds = useMemo(() => {
+    return studentApplications
+      .filter((a) => a.status === 'Rejected')
+      .map((a) => Number(a.job_id));
+  }, [studentApplications]);
+
   const handleToggleApply = async (jobId) => {
     const isApplied = appliedJobIds.includes(jobId);
     try {
@@ -123,6 +148,8 @@ export default function StudentDashboard() {
       let matchesFilter = true;
       if (filterTab === 'accepted') {
         matchesFilter = acceptedJobIds.includes(job.id);
+      } else if (filterTab === 'rejected') {
+        matchesFilter = rejectedJobIds.includes(job.id);
       } else if (filterTab === 'applied') {
         matchesFilter = appliedJobIds.includes(job.id);
       } else if (filterTab === 'saved') {
@@ -131,15 +158,15 @@ export default function StudentDashboard() {
 
       return matchesSearch && matchesFilter;
     });
-  }, [jobs, searchTerm, filterTab, savedJobIds, appliedJobIds, acceptedJobIds]);
+  }, [jobs, searchTerm, filterTab, savedJobIds, appliedJobIds, acceptedJobIds, rejectedJobIds]);
 
   return (
     <div className="dashboard-screen student-screen">
       <Navbar workspaceLabel="Student workspace" />
 
       <div className="student-workspace-layout">
-        <StudentSidebar activePage={activePage} onChange={(page) => page === 'settings' ? navigate('/settings') : setActivePage(page)} />
-        {activePage === 'skills' ? <SkillExchangePage firstName={firstName} user={user} /> : activePage === 'booked-sessions' ? <BookedSessionsPage user={user} onNavigate={setActivePage} /> : activePage === 'create-session' ? <CreateSessionPage user={user} onNavigate={setActivePage} /> : activePage === 'my-sessions' ? <MySessionsPage user={user} onNavigate={setActivePage} /> : activePage === 'applications' ? <MyApplicationsPage user={user} onNavigate={setActivePage} /> : <main className="dashboard-main student-dashboard-main">
+        <StudentSidebar activePage={activePage} onChange={handlePageChange} />
+        {activePage === 'skills' ? <SkillExchangePage firstName={firstName} user={user} /> : activePage === 'booked-sessions' ? <BookedSessionsPage user={user} onNavigate={handlePageChange} /> : activePage === 'create-session' ? <CreateSessionPage user={user} onNavigate={handlePageChange} /> : activePage === 'my-sessions' ? <MySessionsPage user={user} onNavigate={handlePageChange} /> : activePage === 'applications' ? <MyApplicationsPage user={user} onNavigate={handlePageChange} /> : <main className="dashboard-main student-dashboard-main">
         {/* Hero Section */}
         <section className="student-hero">
           <div>
@@ -167,6 +194,18 @@ export default function StudentDashboard() {
               </button>
             )}
 
+            {rejectedJobIds.length > 0 && (
+              <button
+                type="button"
+                className="rejected-indicator-badge"
+                onClick={() => setFilterTab('rejected')}
+              >
+                <XCircle size={14} />
+                <strong>{rejectedJobIds.length}</strong>
+                <span>Application{rejectedJobIds.length === 1 ? '' : 's'} Declined</span>
+              </button>
+            )}
+
             <div className="live-indicator">
               <span />
               <strong>{jobs.length}</strong> live jobs
@@ -191,6 +230,8 @@ export default function StudentDashboard() {
               <h2>
                 {filterTab === 'accepted'
                   ? ' Accepted Applications'
+                  : filterTab === 'rejected'
+                  ? ' Declined Applications'
                   : filterTab === 'applied'
                   ? 'Your Applied Roles'
                   : filterTab === 'saved'
@@ -216,6 +257,16 @@ export default function StudentDashboard() {
                     onClick={() => setFilterTab('accepted')}
                   >
                     <Sparkles size={12} style={{ marginRight: '3px' }} /> Accepted ({acceptedJobIds.length})
+                  </button>
+                )}
+
+                {rejectedJobIds.length > 0 && (
+                  <button
+                    type="button"
+                    className={`text-action rejected-tab ${filterTab === 'rejected' ? 'selected' : ''}`}
+                    onClick={() => setFilterTab('rejected')}
+                  >
+                    <XCircle size={12} style={{ marginRight: '3px' }} /> Rejected ({rejectedJobIds.length})
                   </button>
                 )}
 
@@ -264,6 +315,8 @@ export default function StudentDashboard() {
                   ? 'No roles match that search'
                   : filterTab === 'accepted'
                   ? 'No accepted applications yet'
+                  : filterTab === 'rejected'
+                  ? 'No rejected applications'
                   : filterTab === 'applied'
                   ? 'You have not applied to any roles yet'
                   : filterTab === 'saved'
@@ -275,6 +328,8 @@ export default function StudentDashboard() {
                   ? 'Try another job title or location.'
                   : filterTab === 'accepted'
                   ? 'When recruiters accept your application, you will be notified here and can chat directly.'
+                  : filterTab === 'rejected'
+                  ? 'If a recruiter does not move forward with an application, it will appear here.'
                   : filterTab === 'applied'
                   ? 'Browse live jobs and click "Apply Now" to start sending applications.'
                   : filterTab === 'saved'

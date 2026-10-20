@@ -15,6 +15,7 @@ import JobDetailsPage from './pages/JobDetailsPage';
 import StudentProfilePage from './pages/StudentProfilePage';
 import EditPortfolioPage from './pages/EditPortfolioPage';
 import LandingPage from './pages/LandingPage';
+import CompanyProfilePage from './pages/CompanyProfilePage';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
               }
             />
             <Route path="/jobs/:jobId" element={<ProtectedRoute allowedRole="Student"><JobDetailsPage /></ProtectedRoute>} />
+            <Route path="/companies/:recruiterId" element={<ProtectedRoute allowedRole="Student"><CompanyProfilePage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute allowedRole="Student"><StudentProfilePage ownProfile /></ProtectedRoute>} />
             <Route path="/portfolio/edit" element={<ProtectedRoute allowedRole="Student"><EditPortfolioPage /></ProtectedRoute>} />
             <Route path="/students/:studentId" element={<ProtectedRoute><StudentProfilePage /></ProtectedRoute>} />

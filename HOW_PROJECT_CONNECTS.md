@@ -192,7 +192,8 @@ For standalone deep-linked tasks, dedicated router routes are used:
 - `/#/jobs/:jobId`: Detailed job view.
 - `/#/settings`: Account and profile editor.
 - `/#/portfolio/edit`: Comprehensive portfolio and resume builder.
-- `/#/profile`: Public student portfolio showcase.
+- `/#/profile`: Student's personal portfolio showcase.
+- `/#/students/:studentId`: Public view of other students' portfolios (e.g. peer tutors from Skill Exchange or candidates for recruiters). Supports state (`{ from: 'skills' }`) and query params (`?tab=skills`) to preserve back navigation.
 
 ---
 
@@ -202,10 +203,14 @@ All asynchronous business logic connects through [`frontend/src/services/api.js`
 
 ### Features:
 1. **Async Simulation (`asyncWrap`)**: Returns Promises with realistic micro-delays (40ms) to ensure true asynchronous component lifecycles (loading spinners, disabled states).
-2. **Dual-Role In-Memory Store**: Pre-seeded demo recruiters, jobs, student portfolios, applications, and skill sessions.
-3. **Cross-Component Event Bus**:
+2. **Dual-Role Persistent Store**:
+   - Seeded initial state for recruiters, jobs, student portfolios, applications, and skill sessions.
+   - Applications are persisted in `localStorage` under `kairos_applications` so that status changes (`Applied`, `Accepted`, `Rejected`) endure across browser refreshes and tab transitions.
+3. **Decision Finality Enforcement**:
+   - `updateApplicationStatus` prevents overwriting or toggling applications that are already in an `Accepted` or `Rejected` state, guaranteeing strict decision finality.
+4. **Cross-Component Event Bus**:
    - Updates dispatch `window.dispatchEvent(new CustomEvent('kairos_application_updated'))`.
-   - Both recruiter and student components listen to this event to keep applicants and listings instantly synchronized without a WebSocket backend.
+   - Both recruiter and student components listen to this event to keep applicants, review counts, and job listings instantly synchronized without a WebSocket backend.
 
 ---
 
@@ -221,6 +226,7 @@ classDiagram
 
     class RecruiterSidebar {
         +activePage: string
+        +pendingCount: number
         +onChange(pageKey): void
         -settingsOpen: boolean
         -signOut(): void
@@ -230,10 +236,12 @@ classDiagram
         +activePage: string
         +jobs: Array
         +applications: Array
+        +pendingApplicants: number
         +handlePostJob(): void
         +handleToggleStatus(): void
         +handleDeleteJob(): void
         +handleAcceptApplicant(): void
+        +handleRejectApplicant(): void
     }
 
     class JobCardRecruiter {
@@ -242,6 +250,7 @@ classDiagram
         +onToggleStatus(jobId, status): void
         +onDeleteJob(jobId): void
         +onAcceptApplicant(appId): void
+        +onRejectApplicant(appId): void
     }
 
     RecruiterDashboard *-- Navbar

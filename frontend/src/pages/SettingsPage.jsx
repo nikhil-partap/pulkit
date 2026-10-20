@@ -1,15 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Building2, GraduationCap, Moon, Save, Sun } from 'lucide-react';
+import { ArrowLeft, Building2, GraduationCap, Save } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import { api } from '../services/api';
 
 const emptyProfile = { name: '', email: '', college: '', course: '', availability: 'Weekdays', company: '', jobTitle: '', industry: '' };
 
 export default function SettingsPage() {
   const { user, login } = useAuth();
-  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [profile, setProfile] = useState(emptyProfile);
   const [loading, setLoading] = useState(true);
@@ -73,11 +71,11 @@ export default function SettingsPage() {
     <main className="settings-content">
       <section className="settings-intro">
         <span className="settings-icon">{isRecruiter ? <Building2 size={22} /> : <GraduationCap size={22} />}</span>
-        <div><p className="small-heading">ACCOUNT SETTINGS</p><h1>Edit profile</h1><p>Keep your contact and profile information current.</p></div>
+        <div><p className="small-heading">WORKSPACE SETTINGS</p><h1>Settings</h1><p>Manage your profile details in one place.</p></div>
       </section>
       <form className="settings-form" onSubmit={handleSave}>
         {loading ? <p className="settings-loading">Loading profile...</p> : <>
-          <div className="settings-form-section"><h2>Personal details</h2>
+          <div className="settings-form-section"><h2>Edit profile</h2>
             <div className="settings-field-grid">
               <label>Full name<input value={profile.name} onChange={(event) => updateField('name', event.target.value)} required /></label>
               <label>Email address<input type="email" value={profile.email} onChange={(event) => updateField('email', event.target.value)} required /></label>
@@ -96,7 +94,6 @@ export default function SettingsPage() {
               <label>Availability<select value={profile.availability} onChange={(event) => updateField('availability', event.target.value)}><option>Weekdays</option><option>Weekends</option><option>Both</option></select></label>
             </div>
           </div>}
-          <div className="settings-form-section theme-settings-section"><div><h2>Workspace appearance</h2><p>Choose the color mode for your Kairos workspace.</p></div><div className="theme-choice-group" role="group" aria-label="Workspace color mode"><button type="button" className={theme === 'light' ? 'active' : ''} onClick={() => setTheme('light')}><Sun size={16} /><span><strong>Light mode</strong><small>Bright Kairos workspace</small></span></button><button type="button" className={theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')}><Moon size={16} /><span><strong>Dark mode</strong><small>Low-light workspace</small></span></button></div></div>
           {message && <p className={`settings-message ${isError ? 'error' : 'success'}`}>{message}</p>}
           <div className="settings-actions"><button type="submit" className="settings-save-btn" disabled={saving}><Save size={16} />{saving ? 'Saving...' : 'Save changes'}</button></div>
         </>}

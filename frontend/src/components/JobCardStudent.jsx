@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, MapPin, Clock, Star, Sparkles } from 'lucide-react';
+import { BadgeCheck, MapPin, Clock, Star, Sparkles, XCircle } from 'lucide-react';
 
 export default function JobCardStudent({
   job,
@@ -11,14 +11,19 @@ export default function JobCardStudent({
   const vacanciesCount = Number(job.vacancies || 1);
   const vacancyLabel = vacanciesCount === 1 ? '1 opening' : `${vacanciesCount} openings`;
   const isAccepted = application?.status === 'Accepted';
+  const isRejected = application?.status === 'Rejected';
 
   return (
-    <article className={`student-job-card compact-job-card ${isAccepted ? 'card-accepted-glow' : ''}`}>
+    <article className={`student-job-card compact-job-card ${isAccepted ? 'card-accepted-glow' : ''} ${isRejected ? 'card-rejected-glow' : ''}`}>
       <div className="job-card-top">
         <span className="status active">Live now</span>
         {isAccepted ? (
           <span className="student-accepted-pill">
             <Sparkles size={12} style={{ marginRight: '4px' }} /> Accepted
+          </span>
+        ) : isRejected ? (
+          <span className="student-rejected-pill">
+            <XCircle size={12} style={{ marginRight: '4px' }} /> Application Rejected
           </span>
         ) : (
           <span className="opening-chip">{vacancyLabel}</span>
@@ -52,6 +57,13 @@ export default function JobCardStudent({
         <div className="student-accepted-callout">
           <strong>Application Accepted!</strong>
           <p>The hiring team accepted your application. You will be contacted via your registered email.</p>
+        </div>
+      )}
+
+      {isRejected && (
+        <div className="student-rejected-callout">
+          <strong>Application Not Selected</strong>
+          <p>The recruiter has reviewed your application and decided not to proceed for this role.</p>
         </div>
       )}
 

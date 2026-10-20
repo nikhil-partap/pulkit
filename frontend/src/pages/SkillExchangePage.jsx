@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, CalendarDays, Clock3, Search, UsersRound, X } from 'lucide-react';
+import { BookOpen, CalendarDays, Clock3, Search, UsersRound, X, UserRound } from 'lucide-react';
 import { api } from '../services/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadSkillSessions } from '../store/sessionsSlice';
 import { useNotifications } from '../context/NotificationContext';
+import { Link } from 'react-router-dom';
 
 export default function SkillExchangePage({ firstName, user }) {
   const { addNotification } = useNotifications();
@@ -78,7 +79,31 @@ export default function SkillExchangePage({ firstName, user }) {
               <p className="session-teacher">Hosted by {session.teacher}</p>
               <p className="session-description">{session.description}</p>
               <div className="session-meta"><span><CalendarDays size={14} />{session.time}</span><span><Clock3 size={14} />{session.duration}</span></div>
-              <footer><span><UsersRound size={14} />{session.seats} seats left</span>{isOwnSession ? <span className="own-session-label">Your session</span> : <button type="button" className={isJoined ? 'session-join-button joined' : 'session-join-button'} onClick={() => toggleJoined(session.id)}>{isJoined ? <><X size={15} /> Leave</> : 'Join session'}</button>}</footer>
+              <footer>
+                <span><UsersRound size={14} />{session.seats} seats left</span>
+                <div className="session-card-actions">
+                  <Link
+                    to={`/students/${session.student_id}`}
+                    state={{ from: 'skills', fromName: 'Skill Exchange' }}
+                    className="session-view-profile-btn"
+                    title={`View ${session.teacher}'s profile`}
+                  >
+                    <UserRound size={13} />
+                    <span>View profile</span>
+                  </Link>
+                  {isOwnSession ? (
+                    <span className="own-session-label">Your session</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className={isJoined ? 'session-join-button joined' : 'session-join-button'}
+                      onClick={() => toggleJoined(session.id)}
+                    >
+                      {isJoined ? <><X size={15} /> Leave</> : 'Join session'}
+                    </button>
+                  )}
+                </div>
+              </footer>
             </article>;
           })}
         </div> : <div className="skill-empty"><Search size={23} /><h3>No sessions found</h3><p>Try a different skill or choose another topic.</p></div>}

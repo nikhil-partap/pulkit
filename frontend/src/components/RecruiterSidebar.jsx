@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
-export default function RecruiterSidebar({ activePage, onChange }) {
+export default function RecruiterSidebar({ activePage, onChange, pendingCount = 0 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
@@ -43,6 +43,11 @@ export default function RecruiterSidebar({ activePage, onChange }) {
         >
           <Users size={18} />
           <span>Applicants</span>
+          {pendingCount > 0 && (
+            <span style={{ marginLeft: 'auto', marginRight: '6px', fontSize: '11px', background: 'var(--accent-gold)', color: '#163d36', padding: '1px 7px', borderRadius: '10px', fontWeight: 800 }}>
+              {pendingCount}
+            </span>
+          )}
           <ChevronRight size={15} />
         </button>
       </nav>
@@ -65,22 +70,8 @@ export default function RecruiterSidebar({ activePage, onChange }) {
               <UserRound size={15} /> Edit profile
             </button>
             <div className="sidebar-theme-row">
-              <button
-                type="button"
-                className={`sidebar-theme-option${theme === 'light' ? ' active' : ''}`}
-                onClick={() => setTheme('light')}
-                aria-pressed={theme === 'light'}
-              >
-                <Sun size={13} /> Light
-              </button>
-              <button
-                type="button"
-                className={`sidebar-theme-option${theme === 'dark' ? ' active' : ''}`}
-                onClick={() => setTheme('dark')}
-                aria-pressed={theme === 'dark'}
-              >
-                <Moon size={13} /> Dark
-              </button>
+              <button type="button" className={`sidebar-theme-option${theme === 'light' ? ' active' : ''}`} onClick={() => setTheme('light')} aria-pressed={theme === 'light'}><Sun size={13} /> Light</button>
+              <button type="button" className={`sidebar-theme-option${theme === 'dark' ? ' active' : ''}`} onClick={() => setTheme('dark')} aria-pressed={theme === 'dark'}><Moon size={13} /> Dark</button>
             </div>
             <button type="button" className="sidebar-logout" onClick={signOut}>
               <LogOut size={15} /> Log out <small>Ctrl + B</small>

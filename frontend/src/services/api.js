@@ -2,6 +2,9 @@
 
 const INITIAL_STUDENTS = [
   { id: 1, full_name: 'Rahul Sharma', email: 'rahul@example.com', password: 'password123', college: 'Chitkara University, Punjab Campus', course: 'BCA', availability: 'Weekdays', bio: 'Frontend-focused BCA student who enjoys turning ideas into useful, accessible interfaces. Currently building experience through part-time roles and peer learning.', skills: ['React', 'JavaScript', 'CSS', 'Figma', 'Git'], resume_label: 'Rahul_Sharma_Resume.pdf', projects: [{ title: 'Campus event finder', stack: 'React · REST API', description: 'A responsive student event discovery app with search and category filters.', repoUrl: 'https://github.com/', liveUrl: '' }, { title: 'Cafe ordering interface', stack: 'HTML · CSS · JavaScript', description: 'A mobile-first ordering flow designed for quick counter pickups.', repoUrl: '', liveUrl: '' }] },
+  { id: 21, full_name: 'Ananya Sharma', email: 'ananya@example.com', password: 'password123', college: 'Chitkara University, Punjab Campus', course: 'B.Des', availability: 'Weekends', bio: 'Design student exploring thoughtful product interfaces and visual systems.', skills: ['Figma', 'UI design', 'Canva'], resume_label: 'Ananya_Sharma_Resume.pdf', projects: [{ title: 'Study planner', stack: 'Figma · UX research', description: 'A simple planning concept for students balancing classes and projects.', repoUrl: '', liveUrl: '' }] },
+  { id: 22, full_name: 'Rohan Mehta', email: 'rohan@example.com', password: 'password123', college: 'Chitkara University, Punjab Campus', course: 'B.Tech CSE', availability: 'Weekends', bio: 'Computer science student interested in clear explanations and strong JavaScript foundations.', skills: ['JavaScript', 'React', 'Problem solving'], resume_label: 'Rohan_Mehta_Resume.pdf', projects: [{ title: 'Interview pattern notes', stack: 'JavaScript · Markdown', description: 'A collection of practical coding patterns for student interviews.', repoUrl: '', liveUrl: '' }] },
+  { id: 23, full_name: 'Meera Kapoor', email: 'meera@example.com', password: 'password123', college: 'Chitkara University, Punjab Campus', course: 'BBA', availability: 'Weekdays', bio: 'Business student building a practical personal brand through campus projects and community work.', skills: ['Content strategy', 'Canva', 'Communication'], resume_label: 'Meera_Kapoor_Resume.pdf', projects: [{ title: 'Campus creator guide', stack: 'Canva · Content', description: 'A starter guide for students presenting their skills online.', repoUrl: '', liveUrl: '' }] },
 ];
 
 const INITIAL_RECRUITERS = [
@@ -20,14 +23,34 @@ const INITIAL_SKILL_SESSIONS = [
   { id: 104, student_id: 23, title: 'Build your personal brand', teacher: 'Meera Kapoor', topic: 'Career', level: 'All levels', time: 'Monday · 6:30 PM', duration: '45 min', seats: 7, color: 'coral', description: 'Turn your projects and interests into a profile that recruiters can understand quickly.' },
 ];
 
+const INITIAL_APPLICATIONS = [
+  { id: 401, job_id: 1, student_id: 1, status: 'Applied', created_at: new Date(Date.now() - 86400000).toISOString() },
+];
+
+const loadStoredApplications = () => {
+  try {
+    const raw = localStorage.getItem('kairos_applications');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [...INITIAL_APPLICATIONS];
+};
+
+const saveStoredApplications = (apps) => {
+  try {
+    localStorage.setItem('kairos_applications', JSON.stringify(apps));
+    window.dispatchEvent(new Event('kairos_application_updated'));
+  } catch {}
+};
+
 // In-Memory Store
 let students = [...INITIAL_STUDENTS];
 let recruiters = [...INITIAL_RECRUITERS];
 let jobs = [...INITIAL_JOBS];
-let applications = [];
+let applications = loadStoredApplications();
 let savedJobs = [];
 let skillSessions = [...INITIAL_SKILL_SESSIONS];
-let sessionBookings = [];
+const INITIAL_SESSION_BOOKINGS = [{ id: 501, student_id: 21, session_id: 101 }];
+let sessionBookings = [...INITIAL_SESSION_BOOKINGS];
 const uploadedResumes = new Map();
 
 const asyncWrap = (fn) =>
@@ -159,6 +182,7 @@ const mockApi = {
           const recruiter = recruiters.find((r) => r.recruiter_id === job.recruiter_id) || {};
           return {
             id: job.id,
+            recruiter_id: job.recruiter_id,
             title: job.title,
             company: recruiter.company_name || 'Dr Tea Cafe',
             recruiter_name: recruiter.full_name || 'Hiring Team',
@@ -176,6 +200,24 @@ const mockApi = {
           };
         })
     ),
+
+  getRecruiterCompanyProfile: async (recruiterId) =>
+    asyncWrap(() => {
+      const recruiter = recruiters.find((item) => Number(item.recruiter_id) === Number(recruiterId));
+      if (!recruiter) throw new Error('Company profile not found.');
+      const activeRoles = jobs
+        .filter((job) => Number(job.recruiter_id) === Number(recruiterId) && job.status === 'Active')
+        .map((job) => ({ id: job.id, title: job.title, type: job.work_type, location: job.location, hours: job.hours, pay: job.pay }));
+      return {
+        id: recruiter.recruiter_id,
+        company: recruiter.company_name,
+        industry: recruiter.industry || 'Other',
+        contactName: recruiter.full_name,
+        contactRole: recruiter.job_title || 'Recruiter',
+        email: recruiter.email,
+        activeRoles,
+      };
+    }),
 
   getSavedJobIds: async (studentId) =>
     asyncWrap(() => savedJobs.filter((s) => Number(s.student_id) === Number(studentId)).map((s) => Number(s.job_id))),
@@ -196,21 +238,30 @@ const mockApi = {
 
   applyForJob: async (jobId, studentId) =>
     asyncWrap(() => {
-      if (!applications.some((a) => Number(a.job_id) === Number(jobId) && Number(a.student_id) === Number(studentId))) {
+      applications = loadStoredApplications();
+      const existing = applications.find((a) => Number(a.job_id) === Number(jobId) && Number(a.student_id) === Number(studentId));
+      if (!existing) {
         applications.push({ id: Date.now(), job_id: Number(jobId), student_id: Number(studentId), status: 'Applied', created_at: new Date().toISOString() });
+      } else {
+        existing.status = 'Applied';
+        existing.created_at = new Date().toISOString();
       }
+      saveStoredApplications(applications);
       return { message: 'Applied successfully.' };
     }),
 
   withdrawApplication: async (jobId, studentId) =>
     asyncWrap(() => {
+      applications = loadStoredApplications();
       applications = applications.filter((a) => !(Number(a.job_id) === Number(jobId) && Number(a.student_id) === Number(studentId)));
+      saveStoredApplications(applications);
       return { message: 'Application withdrawn.' };
     }),
 
   getStudentApplications: async (studentId) =>
-    asyncWrap(() =>
-      applications
+    asyncWrap(() => {
+      applications = loadStoredApplications();
+      return applications
         .filter((a) => Number(a.student_id) === Number(studentId))
         .map((app) => {
           const job = jobs.find((j) => Number(j.id) === Number(app.job_id)) || {};
@@ -228,8 +279,8 @@ const mockApi = {
             company_name: recruiter.company_name || 'Verified Company',
             recruiter_email: recruiter.email || '',
           };
-        })
-    ),
+        });
+    }),
 
   // Recruiter Actions
   getRecruiterJobs: async (recruiterId) =>
@@ -252,6 +303,7 @@ const mockApi = {
 
   getRecruiterApplications: async (recruiterId) =>
     asyncWrap(() => {
+      applications = loadStoredApplications();
       const recruiterJobIds = new Set(jobs.filter((j) => Number(j.recruiter_id) === Number(recruiterId)).map((j) => Number(j.id)));
       return applications
         .filter((a) => recruiterJobIds.has(Number(a.job_id)))
@@ -276,9 +328,14 @@ const mockApi = {
 
   updateApplicationStatus: async (applicationId, _recruiterId, newStatus) =>
     asyncWrap(() => {
+      applications = loadStoredApplications();
       const app = applications.find((a) => Number(a.id) === Number(applicationId));
       if (!app) throw new Error('Application not found.');
+      if (app.status === 'Accepted' || app.status === 'Rejected') {
+        throw new Error(`Application decision is final (${app.status}) and cannot be changed.`);
+      }
       app.status = newStatus;
+      saveStoredApplications(applications);
       return { message: `Application ${newStatus.toLowerCase()} successfully.` };
     }),
 
@@ -356,6 +413,18 @@ const mockApi = {
       return skillSessions.filter((session) => bookedIds.has(Number(session.id))).map((session) => ({ ...session }));
     }),
 
+  getSkillSessionBookings: async (sessionId, teacherId) =>
+    asyncWrap(() => {
+      const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
+      if (!session || Number(session.student_id) !== Number(teacherId)) throw new Error('Session not found or you do not have permission to view attendees.');
+      return sessionBookings
+        .filter((booking) => Number(booking.session_id) === Number(sessionId))
+        .map((booking) => {
+          const student = students.find((item) => Number(item.id) === Number(booking.student_id));
+          return { bookingId: booking.id, studentId: booking.student_id, name: student?.full_name || 'Student', college: student?.college || '', course: student?.course || '' };
+        });
+    }),
+
   bookSkillSession: async (studentId, sessionId) =>
     asyncWrap(() => {
       const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
@@ -379,7 +448,7 @@ const mockApi = {
     applications = [];
     savedJobs = [];
     skillSessions = [...INITIAL_SKILL_SESSIONS];
-    sessionBookings = [];
+    sessionBookings = [...INITIAL_SESSION_BOOKINGS];
   },
 };
 

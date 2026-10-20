@@ -5,9 +5,10 @@ import JobCardRecruiter from '../components/JobCardRecruiter';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { useNotifications } from '../context/NotificationContext';
-import { PlusCircle, Filter, ArrowRight, RefreshCw, Users, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, Filter, ArrowRight, RefreshCw, Users, CheckCircle2, XCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changeJobStatus, createJob, deleteJob, loadRecruiterJobs } from '../store/jobsSlice';
+import { Link } from 'react-router-dom';
 
 export default function RecruiterDashboard() {
   const { user } = useAuth();
@@ -65,9 +66,33 @@ export default function RecruiterDashboard() {
         prev.map((a) => (a.application_id === applicationId ? { ...a, status: 'Accepted' } : a))
       );
       const applicant = applications.find((item) => item.application_id === applicationId);
-      addNotification({ title: 'Applicant accepted', body: `${applicant?.student_name || 'The student'} was accepted for ${applicant?.job_title || 'the role'}.`, type: 'application' });
+      addNotification({ title: 'Application accepted', body: `Your application for ${applicant?.job_title || 'the role'} was accepted.`, type: 'application', recipient: { role: 'Student', id: applicant?.student_id } });
     } catch (err) {
       console.error('Error accepting applicant:', err);
+      loadData();
+    }
+  };
+
+  const handleRejectApplicant = async (applicationId) => {
+    try {
+      await api.updateApplicationStatus(applicationId, user.id, 'Rejected');
+      setApplications((prev) =>
+        prev.map((a) => (a.application_id === applicationId ? { ...a, status: 'Rejected' } : a))
+      );
+      const applicant = applications.find((item) => item.application_id === applicationId);
+      addNotification({
+        title: 'Application rejected',
+        body: `Application for ${applicant?.student_name || 'applicant'} (${applicant?.job_title || 'the role'}) was rejected.`,
+        type: 'application'
+      });
+      addNotification({
+        title: 'Application update',
+        body: `Your application for ${applicant?.job_title || 'the role'} was not accepted.`,
+        type: 'application',
+        recipient: { role: 'Student', id: applicant?.student_id }
+      });
+    } catch (err) {
+      console.error('Error rejecting applicant:', err);
       loadData();
     }
   };
@@ -139,7 +164,7 @@ export default function RecruiterDashboard() {
   }, [jobs, activeOnly]);
 
   const activeCount = useMemo(() => jobs.filter((job) => job.status === 'Active').length, [jobs]);
-  const pendingApplicants = useMemo(() => applications.filter((a) => a.status === 'Pending').length, [applications]);
+  const pendingApplicants = useMemo(() => applications.filter((a) => a.status !== 'Accepted' && a.status !== 'Rejected').length, [applications]);
 
   // ---------- Page Views ----------
 
@@ -307,6 +332,7 @@ export default function RecruiterDashboard() {
                   onToggleStatus={handleToggleStatus}
                   onDeleteJob={handleDeleteJob}
                   onAcceptApplicant={handleAcceptApplicant}
+                  onRejectApplicant={handleRejectApplicant}
                 />
               ))}
             </div>
@@ -355,17 +381,29 @@ export default function RecruiterDashboard() {
                   <small>{app.student_college || app.student_email || ''}</small>
                 </div>
                 <div className="recruiter-applicant-actions">
+                  <Link to={`/students/${app.student_id}`} state={{ from: 'recruiter', fromName: 'Applicants' }} className="view-applicant-portfolio">View portfolio</Link>
                   <span className={`application-status-badge ${(app.status || 'applied').toLowerCase()}`}>
                     {app.status || 'Applied'}
                   </span>
-                  {app.status !== 'Accepted' && (
-                    <button
-                      type="button"
-                      className="recruiter-accept-btn"
-                      onClick={() => handleAcceptApplicant(app.application_id)}
-                    >
-                      <CheckCircle2 size={13} /> Accept
-                    </button>
+                  {app.status !== 'Accepted' && app.status !== 'Rejected' && (
+                    <>
+                      <button
+                        type="button"
+                        className="recruiter-accept-btn"
+                        onClick={() => handleAcceptApplicant(app.application_id)}
+                        title="Accept applicant"
+                      >
+                        <CheckCircle2 size={13} /> Accept
+                      </button>
+                      <button
+                        type="button"
+                        className="recruiter-reject-btn"
+                        onClick={() => handleRejectApplicant(app.application_id)}
+                        title="Reject applicant"
+                      >
+                        <XCircle size={13} /> Reject
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -388,7 +426,7 @@ export default function RecruiterDashboard() {
       <Navbar workspaceLabel="Recruiter workspace" />
 
       <div className="recruiter-workspace-layout">
-        <RecruiterSidebar activePage={activePage} onChange={setActivePage} />
+        <RecruiterSidebar activePage={activePage} onChange={setActivePage} pendingCount={pendingApplicants} />
         {pageMap[activePage] || ListingsAndPostView}
       </div>
     </div>

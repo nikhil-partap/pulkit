@@ -43,7 +43,7 @@ export default function StudentSidebar({ activePage, onChange }) {
       <div className="student-sidebar-settings">
         <button type="button" className={settingsOpen ? 'sidebar-settings-trigger active' : 'sidebar-settings-trigger'} onClick={() => setSettingsOpen((open) => !open)} aria-expanded={settingsOpen}><Settings size={18} /><span>Settings</span><ChevronDown size={15} /></button>
         {settingsOpen && <div className="sidebar-settings-menu">
-          <button type="button" onClick={() => navigate('/settings')}><UserRound size={15} /> Edit profile</button>
+          <button type="button" onClick={() => navigate('/settings')}><Settings size={15} /> Account</button>
           <button type="button" onClick={() => navigate('/portfolio/edit')}><FilePenLine size={15} /> Edit portfolio</button>
           <button type="button" onClick={() => navigate('/profile')}><UserRound size={15} /> View portfolio</button>
           <div className="sidebar-theme-row">

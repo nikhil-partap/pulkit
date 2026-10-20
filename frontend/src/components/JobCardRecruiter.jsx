@@ -1,5 +1,6 @@
 import React from 'react';
-import { Mail, Users, Trash2, Power, Check } from 'lucide-react';
+import { Mail, Users, Trash2, Power, Check, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function JobCardRecruiter({
   job,
@@ -7,6 +8,7 @@ export default function JobCardRecruiter({
   onToggleStatus,
   onDeleteJob,
   onAcceptApplicant,
+  onRejectApplicant,
 }) {
   const jobApps = applications.filter((app) => app.job_id === job.id);
   const vacanciesCount = Number(job.vacancies || 1);
@@ -60,10 +62,8 @@ export default function JobCardRecruiter({
       {/* Applicants Section */}
       <div className="applicants-section">
         <div className="applicants-title">
-          <span>
-            <Users size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
-            Applicants ({jobApps.length})
-          </span>
+          <Users size={14} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+          Applicants ({jobApps.length})
         </div>
 
         {jobApps.length === 0 ? (
@@ -74,13 +74,14 @@ export default function JobCardRecruiter({
           <div className="applicants-list">
             {jobApps.map((app) => {
               const isAccepted = app.status === 'Accepted';
+              const isRejected = app.status === 'Rejected';
               return (
                 <div key={app.application_id || `${app.job_id}-${app.student_id}`} className="applicant-card">
                   <div className="applicant-info">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       <strong>{app.student_name}</strong>
-                      <span className={`applicant-status-badge ${isAccepted ? 'status-accepted' : 'status-pending'}`}>
-                        {isAccepted ? <><Check size={12} /> Accepted</> : 'Under Review'}
+                      <span className={`applicant-status-badge ${isAccepted ? 'status-accepted' : isRejected ? 'status-rejected' : 'status-pending'}`}>
+                        {isAccepted ? <><Check size={12} /> Accepted</> : isRejected ? <><X size={12} /> Rejected</> : 'Under Review'}
                       </span>
                     </div>
                     <p>
@@ -92,22 +93,35 @@ export default function JobCardRecruiter({
                   </div>
 
                   <div className="applicant-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                    {!isAccepted && (
-                      <button
-                        type="button"
-                        className="accept-applicant-btn"
-                        onClick={() => onAcceptApplicant && onAcceptApplicant(app.application_id)}
-                        title="Accept this student's application"
-                      >
-                        <Check size={13} style={{ marginRight: '4px' }} />
-                        Accept Application
-                      </button>
+                    {!isAccepted && !isRejected && (
+                      <>
+                        <button
+                          type="button"
+                          className="accept-applicant-btn"
+                          onClick={() => onAcceptApplicant && onAcceptApplicant(app.application_id)}
+                          title="Accept this student's application"
+                        >
+                          <Check size={13} style={{ marginRight: '4px' }} />
+                          Accept Application
+                        </button>
+
+                        <button
+                          type="button"
+                          className="reject-applicant-btn"
+                          onClick={() => onRejectApplicant && onRejectApplicant(app.application_id)}
+                          title="Reject this student's application"
+                        >
+                          <X size={13} style={{ marginRight: '4px' }} />
+                          Reject Application
+                        </button>
+                      </>
                     )}
 
                     <a href={`mailto:${app.student_email}`} className="contact-student-btn" title="Send Email">
                       <Mail size={12} style={{ marginRight: '4px' }} />
                       Email
                     </a>
+                    <Link to={`/students/${app.student_id}`} state={{ from: 'recruiter', fromName: 'Recruiter' }} className="view-applicant-portfolio">View portfolio</Link>
                   </div>
                 </div>
               );
