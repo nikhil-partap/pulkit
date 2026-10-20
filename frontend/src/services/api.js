@@ -17,10 +17,10 @@ const INITIAL_JOBS = [
 ];
 
 const INITIAL_SKILL_SESSIONS = [
-  { id: 101, student_id: 1, title: 'React hooks, made practical', teacher: 'Rahul Sharma', topic: 'Development', level: 'Intermediate', time: 'Wednesday · 5:00 PM', duration: '60 min', seats: 3, color: 'teal', description: 'Build a small counter and learn when to use useState, useEffect, and custom hooks.' },
-  { id: 102, student_id: 21, title: 'Figma for first portfolios', teacher: 'Ananya Sharma', topic: 'Design', level: 'Beginner', time: 'Saturday · 11:00 AM', duration: '75 min', seats: 4, color: 'gold', description: 'Learn a simple workflow to design your first portfolio screen with Figma.' },
-  { id: 103, student_id: 22, title: 'JavaScript interview patterns', teacher: 'Rohan Mehta', topic: 'Development', level: 'Intermediate', time: 'Sunday · 4:00 PM', duration: '60 min', seats: 2, color: 'blue', description: 'Practice common array, string, and object questions with a calm problem-solving approach.' },
-  { id: 104, student_id: 23, title: 'Build your personal brand', teacher: 'Meera Kapoor', topic: 'Career', level: 'All levels', time: 'Monday · 6:30 PM', duration: '45 min', seats: 7, color: 'coral', description: 'Turn your projects and interests into a profile that recruiters can understand quickly.' },
+  { id: 101, student_id: 1, title: 'React hooks, made practical', teacher: 'Rahul Sharma', topic: 'Development', level: 'Intermediate', time: 'Wednesday · 5:00 PM', duration: '60 min', seats: 3, color: 'teal', description: 'Build a small counter and learn when to use useState, useEffect, and custom hooks.', meetingLink: '' },
+  { id: 102, student_id: 21, title: 'Figma for first portfolios', teacher: 'Ananya Sharma', topic: 'Design', level: 'Beginner', time: 'Saturday · 11:00 AM', duration: '75 min', seats: 4, color: 'gold', description: 'Learn a simple workflow to design your first portfolio screen with Figma.', meetingLink: '' },
+  { id: 103, student_id: 22, title: 'JavaScript interview patterns', teacher: 'Rohan Mehta', topic: 'Development', level: 'Intermediate', time: 'Sunday · 4:00 PM', duration: '60 min', seats: 2, color: 'blue', description: 'Practice common array, string, and object questions with a calm problem-solving approach.', meetingLink: '' },
+  { id: 104, student_id: 23, title: 'Build your personal brand', teacher: 'Meera Kapoor', topic: 'Career', level: 'All levels', time: 'Monday · 6:30 PM', duration: '45 min', seats: 7, color: 'coral', description: 'Turn your projects and interests into a profile that recruiters can understand quickly.', meetingLink: '' },
 ];
 
 const INITIAL_APPLICATIONS = [
@@ -42,15 +42,49 @@ const saveStoredApplications = (apps) => {
   } catch {}
 };
 
+const INITIAL_SESSION_BOOKINGS = [
+  { id: 501, student_id: 21, session_id: 101 },
+  { id: 502, student_id: 1, session_id: 102 },
+];
+
+const loadStoredSessions = () => {
+  try {
+    const raw = localStorage.getItem('kairos_skill_sessions');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [...INITIAL_SKILL_SESSIONS];
+};
+
+const saveStoredSessions = (items) => {
+  try {
+    localStorage.setItem('kairos_skill_sessions', JSON.stringify(items));
+    window.dispatchEvent(new Event('kairos_sessions_updated'));
+  } catch {}
+};
+
+const loadStoredBookings = () => {
+  try {
+    const raw = localStorage.getItem('kairos_session_bookings');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [...INITIAL_SESSION_BOOKINGS];
+};
+
+const saveStoredBookings = (bookings) => {
+  try {
+    localStorage.setItem('kairos_session_bookings', JSON.stringify(bookings));
+    window.dispatchEvent(new Event('kairos_sessions_updated'));
+  } catch {}
+};
+
 // In-Memory Store
 let students = [...INITIAL_STUDENTS];
 let recruiters = [...INITIAL_RECRUITERS];
 let jobs = [...INITIAL_JOBS];
 let applications = loadStoredApplications();
 let savedJobs = [];
-let skillSessions = [...INITIAL_SKILL_SESSIONS];
-const INITIAL_SESSION_BOOKINGS = [{ id: 501, student_id: 21, session_id: 101 }];
-let sessionBookings = [...INITIAL_SESSION_BOOKINGS];
+let skillSessions = loadStoredSessions();
+let sessionBookings = loadStoredBookings();
 const uploadedResumes = new Map();
 
 const asyncWrap = (fn) =>
@@ -376,45 +410,83 @@ const mockApi = {
     }),
 
   // Skill Exchange Actions
-  getSkillSessions: async () => asyncWrap(() => skillSessions.map((session) => ({ ...session }))),
+  getSkillSessions: async () =>
+    asyncWrap(() => {
+      skillSessions = loadStoredSessions();
+      return skillSessions.map((session) => ({ ...session }));
+    }),
 
   getStudentSkillSessions: async (studentId) =>
-    asyncWrap(() => skillSessions.filter((session) => Number(session.student_id) === Number(studentId)).map((session) => ({ ...session }))),
-
-  createSkillSession: async ({ studentId, teacher, title, topic, level, time, duration, seats, description }) =>
     asyncWrap(() => {
+      skillSessions = loadStoredSessions();
+      return skillSessions.filter((session) => Number(session.student_id) === Number(studentId)).map((session) => ({ ...session }));
+    }),
+
+  createSkillSession: async ({ studentId, teacher, title, topic, level, time, duration, seats, description, meetingLink = '' }) =>
+    asyncWrap(() => {
+      skillSessions = loadStoredSessions();
       const newSession = {
         id: Date.now(), student_id: Number(studentId), teacher: teacher.trim(), title: title.trim(), topic, level,
         time: time.trim(), duration: duration.trim(), seats: Number(seats), description: description.trim(), color: 'teal',
+        meetingLink: (meetingLink || '').trim(),
       };
       skillSessions.unshift(newSession);
+      saveStoredSessions(skillSessions);
       return { ...newSession };
     }),
 
   updateSkillSession: async (sessionId, studentId, updates) =>
     asyncWrap(() => {
+      skillSessions = loadStoredSessions();
       const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
       if (!session || Number(session.student_id) !== Number(studentId)) throw new Error('Session not found or you do not have permission to edit it.');
-      Object.assign(session, { ...updates, title: updates.title.trim(), time: updates.time.trim(), duration: updates.duration.trim(), description: updates.description.trim(), seats: Number(updates.seats) });
+      Object.assign(session, {
+        ...updates,
+        title: updates.title !== undefined ? updates.title.trim() : session.title,
+        time: updates.time !== undefined ? updates.time.trim() : session.time,
+        duration: updates.duration !== undefined ? updates.duration.trim() : session.duration,
+        description: updates.description !== undefined ? updates.description.trim() : session.description,
+        seats: updates.seats !== undefined ? Number(updates.seats) : session.seats,
+        meetingLink: updates.meetingLink !== undefined ? (updates.meetingLink || '').trim() : (session.meetingLink || ''),
+      });
+      saveStoredSessions(skillSessions);
+      return { ...session };
+    }),
+
+  setSkillSessionMeetingLink: async (sessionId, studentId, meetingLink) =>
+    asyncWrap(() => {
+      skillSessions = loadStoredSessions();
+      const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
+      if (!session || Number(session.student_id) !== Number(studentId)) {
+        throw new Error('Session not found or you do not have permission to provide a link for it.');
+      }
+      session.meetingLink = (meetingLink || '').trim();
+      saveStoredSessions(skillSessions);
       return { ...session };
     }),
 
   deleteSkillSession: async (sessionId, studentId) =>
     asyncWrap(() => {
+      skillSessions = loadStoredSessions();
       const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
       if (!session || Number(session.student_id) !== Number(studentId)) throw new Error('Session not found or you do not have permission to delete it.');
       skillSessions = skillSessions.filter((item) => Number(item.id) !== Number(sessionId));
+      saveStoredSessions(skillSessions);
       return { message: 'Session deleted.' };
     }),
 
   getBookedSkillSessions: async (studentId) =>
     asyncWrap(() => {
+      skillSessions = loadStoredSessions();
+      sessionBookings = loadStoredBookings();
       const bookedIds = new Set(sessionBookings.filter((booking) => Number(booking.student_id) === Number(studentId)).map((booking) => Number(booking.session_id)));
       return skillSessions.filter((session) => bookedIds.has(Number(session.id))).map((session) => ({ ...session }));
     }),
 
   getSkillSessionBookings: async (sessionId, teacherId) =>
     asyncWrap(() => {
+      skillSessions = loadStoredSessions();
+      sessionBookings = loadStoredBookings();
       const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
       if (!session || Number(session.student_id) !== Number(teacherId)) throw new Error('Session not found or you do not have permission to view attendees.');
       return sessionBookings
@@ -427,17 +499,22 @@ const mockApi = {
 
   bookSkillSession: async (studentId, sessionId) =>
     asyncWrap(() => {
+      skillSessions = loadStoredSessions();
+      sessionBookings = loadStoredBookings();
       const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
       if (!session) throw new Error('This session is no longer available.');
       if (Number(session.student_id) === Number(studentId)) throw new Error('You cannot book your own session.');
       if (sessionBookings.some((booking) => Number(booking.student_id) === Number(studentId) && Number(booking.session_id) === Number(sessionId))) return { message: 'Already booked.' };
       sessionBookings.push({ id: Date.now(), student_id: Number(studentId), session_id: Number(sessionId) });
+      saveStoredBookings(sessionBookings);
       return { message: 'Session booked.' };
     }),
 
   cancelSkillSessionBooking: async (studentId, sessionId) =>
     asyncWrap(() => {
+      sessionBookings = loadStoredBookings();
       sessionBookings = sessionBookings.filter((booking) => !(Number(booking.student_id) === Number(studentId) && Number(booking.session_id) === Number(sessionId)));
+      saveStoredBookings(sessionBookings);
       return { message: 'Booking cancelled.' };
     }),
 

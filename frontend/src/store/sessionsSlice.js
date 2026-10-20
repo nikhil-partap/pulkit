@@ -4,6 +4,7 @@ import { api } from '../services/api';
 export const loadSkillSessions = createAsyncThunk('sessions/loadAll', () => api.getSkillSessions());
 export const createSkillSession = createAsyncThunk('sessions/create', (session) => api.createSkillSession(session));
 export const updateSkillSession = createAsyncThunk('sessions/update', ({ sessionId, studentId, updates }) => api.updateSkillSession(sessionId, studentId, updates));
+export const setSkillSessionMeetingLink = createAsyncThunk('sessions/setMeetingLink', ({ sessionId, studentId, meetingLink }) => api.setSkillSessionMeetingLink(sessionId, studentId, meetingLink));
 export const deleteSkillSession = createAsyncThunk('sessions/delete', ({ sessionId, studentId }) => api.deleteSkillSession(sessionId, studentId));
 
 const sessionsSlice = createSlice({
@@ -16,6 +17,7 @@ const sessionsSlice = createSlice({
     .addCase(loadSkillSessions.rejected, (state, action) => { state.status = 'failed'; state.error = action.error.message; })
     .addCase(createSkillSession.fulfilled, (state, action) => { state.items.unshift(action.payload); })
     .addCase(updateSkillSession.fulfilled, (state, action) => { const index = state.items.findIndex((item) => item.id === action.payload.id); if (index >= 0) state.items[index] = action.payload; })
+    .addCase(setSkillSessionMeetingLink.fulfilled, (state, action) => { const index = state.items.findIndex((item) => item.id === action.payload.id); if (index >= 0) state.items[index] = action.payload; })
     .addCase(deleteSkillSession.fulfilled, (state, action) => { state.items = state.items.filter((item) => item.id !== action.meta.arg.sessionId); }),
 });
 

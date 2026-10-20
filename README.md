@@ -73,6 +73,7 @@ The project includes pre-configured demo accounts for both roles with instant on
   - View host profile directly from the session card footer with seamless return navigation back to Skill Exchange.
   - One-click seat booking and booking cancellation.
   - Host your own skill session with custom schedule, tags, and capacity.
+  - **Attendee-Only Meeting Links**: Hosts can click **"Provide link"** in "My sessions" to share a meeting URL. An instant push notification is delivered to all enrolled learners, and a **"Join meeting"** button unlocks in their "Booked sessions" (unbooked students or before link provision see *"Link will be given to you soon."*).
 
 ### 🏢 Recruiter Workspace (`/#/recruiter`)
 - **Unified Two-Column Dashboard**:
