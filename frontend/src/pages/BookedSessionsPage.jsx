@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarCheck2, CalendarDays, Clock3, UsersRound, Video, X } from 'lucide-react';
+import { CalendarCheck2, CalendarDays, Clock3, Lock, UsersRound, Video, X } from 'lucide-react';
 import { api } from '../services/api';
 
 export default function BookedSessionsPage({ user, onNavigate }) {
@@ -26,6 +26,10 @@ export default function BookedSessionsPage({ user, onNavigate }) {
   }, [user.id]);
 
   const cancel = async (session) => {
+    if (session.meetingLink && session.meetingLink.trim()) {
+      setMessage('This session cannot be cancelled because the meeting link has already been provided.');
+      return;
+    }
     try {
       await api.cancelSkillSessionBooking(user.id, session.id);
       setSessions((current) => current.filter((item) => item.id !== session.id));
@@ -110,9 +114,16 @@ export default function BookedSessionsPage({ user, onNavigate }) {
                   )}
                 </div>
 
-                <button type="button" className="cancel-booking-button" onClick={() => cancel(session)}>
-                  <X size={15} /> Cancel booking
-                </button>
+                {session.meetingLink && session.meetingLink.trim() ? (
+                  <div className="booking-locked-box">
+                    <Lock size={13} />
+                    <span>Cancellation locked — meeting link provided</span>
+                  </div>
+                ) : (
+                  <button type="button" className="cancel-booking-button" onClick={() => cancel(session)}>
+                    <X size={15} /> Cancel booking
+                  </button>
+                )}
               </article>
             ))}
           </div>

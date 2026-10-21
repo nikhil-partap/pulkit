@@ -123,11 +123,13 @@ stateDiagram-v2
 
 1. **Browse Sessions**: Students discover micro-learning workshops hosted by fellow students (e.g., React Hooks, Figma UI, Interview Prep).
 2. **View Host Profile**: Every session card features a dedicated **"View profile"** button in its footer action row. Navigating to the student teacher's profile preserves the referrer state (`from: 'skills'`), allowing the back button to return directly to the Skill Exchange tab rather than defaulting to job listings.
-3. **Book Seats**: One-click booking with real-time seat counter deduction.
-4. **Booked Sessions & Meeting Links**:
+3. **Book & Cancel Seats (Real-Time Counter Adjustment)**:
+   - One-click booking immediately decreases the remaining seats for that session by 1. Sessions with 0 seats remaining are disabled and marked "Full".
+   - Cancelling a booking releases the seat and increments the session's available seats back by 1.
+4. **Booked Sessions & Cancellation Lock**:
    - Students who applied/booked can access the session in "Booked sessions".
-   - If the host has not yet provided a meeting link, the card clearly shows: `Link will be given to you soon.`
-   - Once the host provides the link, a **"Join meeting"** button appears, and an in-app notification is automatically pushed to all enrolled attendees.
+   - If the host has not yet provided a meeting link, the card clearly shows: `Link will be given to you soon.` and allows cancellation.
+   - Once the host provides the meeting link, a **"Join meeting"** button appears, and **cancellation is strictly locked** (`Cancellation locked — meeting link provided`) so confirmed attendees cannot cancel once the session is finalized.
 5. **Host a Session & Provide Meeting Link**:
    - Students can host custom workshops.
    - In "My sessions", the host has a **"Provide link"** button to enter their Google Meet, Zoom, or Teams URL.

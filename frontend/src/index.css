@@ -3132,3 +3132,43 @@ textarea {
   color: var(--accent-gold);
 }
 
+/* Session booking cancellation locked styles */
+.booking-locked-box {
+  margin-top: 14px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 7px;
+  background: rgba(23, 107, 89, 0.08);
+  border: 1px solid rgba(23, 107, 89, 0.2);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.session-locked-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  background: var(--light-green);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 800;
+  border: 1px solid rgba(23, 107, 89, 0.18);
+}
+
+.dark-theme .booking-locked-box {
+  background: rgba(245, 197, 24, 0.08);
+  border-color: rgba(245, 197, 24, 0.25);
+  color: var(--accent-gold);
+}
+
+.dark-theme .session-locked-tag {
+  background: rgba(23, 107, 89, 0.25);
+  border-color: rgba(23, 107, 89, 0.45);
+  color: #79d6bf;
+}
+

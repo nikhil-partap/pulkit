@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { BookOpen, CalendarDays, Clock3, Search, UsersRound, X, UserRound } from 'lucide-react';
+import { BookOpen, CalendarDays, Clock3, Lock, Search, UsersRound, X, UserRound } from 'lucide-react';
 import { api } from '../services/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadSkillSessions } from '../store/sessionsSlice';
@@ -18,8 +18,14 @@ export default function SkillExchangePage({ firstName, user }) {
   const loading = sessionStatus === 'idle' || sessionStatus === 'loading';
 
   useEffect(() => {
-    Promise.all([dispatch(loadSkillSessions()).unwrap(), api.getBookedSkillSessions(user.id)])
-      .then(([, booked]) => setBookedIds(booked.map((session) => session.id)));
+    const refreshData = () => {
+      Promise.all([dispatch(loadSkillSessions()).unwrap(), api.getBookedSkillSessions(user.id)])
+        .then(([, booked]) => setBookedIds(booked.map((session) => session.id)))
+        .catch(() => {});
+    };
+    refreshData();
+    window.addEventListener('kairos_sessions_updated', refreshData);
+    return () => window.removeEventListener('kairos_sessions_updated', refreshData);
   }, [dispatch, user.id]);
 
   const visibleSessions = useMemo(() => sessions.filter((session) => {
@@ -27,20 +33,29 @@ export default function SkillExchangePage({ firstName, user }) {
     return matchesQuery && (topic === 'All' || session.topic === topic);
   }), [sessions, query, topic]);
 
-  const toggleJoined = async (id) => {
-    const isBooked = bookedIds.includes(id);
+  const toggleJoined = async (session) => {
+    const isBooked = bookedIds.includes(session.id);
     try {
       if (isBooked) {
-        await api.cancelSkillSessionBooking(user.id, id);
-        setBookedIds((current) => current.filter((item) => item !== id));
+        if (session.meetingLink && session.meetingLink.trim()) {
+          setBookingMessage('This session cannot be cancelled because the meeting link has already been provided.');
+          return;
+        }
+        await api.cancelSkillSessionBooking(user.id, session.id);
+        setBookedIds((current) => current.filter((item) => item !== session.id));
         setBookingMessage('Booking cancelled.');
         addNotification({ title: 'Booking cancelled', body: 'Your seat was released from the skill session.', type: 'session' });
       } else {
-        await api.bookSkillSession(user.id, id);
-        setBookedIds((current) => [...current, id]);
+        if (Number(session.seats) <= 0) {
+          setBookingMessage('No seats left for this session.');
+          return;
+        }
+        await api.bookSkillSession(user.id, session.id);
+        setBookedIds((current) => [...current, session.id]);
         setBookingMessage('Session booked. Find it under Booked sessions.');
         addNotification({ title: 'Session booked', body: 'Your Skill Exchange session is now in Booked sessions.', type: 'session' });
       }
+      dispatch(loadSkillSessions());
     } catch (error) { setBookingMessage(error.message || 'Could not update this booking.'); }
   };
 
@@ -93,13 +108,18 @@ export default function SkillExchangePage({ firstName, user }) {
                   </Link>
                   {isOwnSession ? (
                     <span className="own-session-label">Your session</span>
+                  ) : isJoined && session.meetingLink && session.meetingLink.trim() ? (
+                    <span className="session-locked-tag" title="Meeting link provided — cancellation locked">
+                      <Lock size={12} /> Confirmed
+                    </span>
                   ) : (
                     <button
                       type="button"
+                      disabled={!isJoined && Number(session.seats) <= 0}
                       className={isJoined ? 'session-join-button joined' : 'session-join-button'}
-                      onClick={() => toggleJoined(session.id)}
+                      onClick={() => toggleJoined(session)}
                     >
-                      {isJoined ? <><X size={15} /> Leave</> : 'Join session'}
+                      {isJoined ? <><X size={15} /> Leave</> : Number(session.seats) <= 0 ? 'Full' : 'Join session'}
                     </button>
                   )}
                 </div>

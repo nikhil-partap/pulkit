@@ -208,9 +208,13 @@ All asynchronous business logic connects through [`frontend/src/services/api.js`
    - Applications are persisted in `localStorage` under `kairos_applications` so that status changes (`Applied`, `Accepted`, `Rejected`) endure across browser refreshes and tab transitions.
 3. **Decision Finality Enforcement**:
    - `updateApplicationStatus` prevents overwriting or toggling applications that are already in an `Accepted` or `Rejected` state, guaranteeing strict decision finality.
-4. **Cross-Component Event Bus**:
-   - Updates dispatch `window.dispatchEvent(new CustomEvent('kairos_application_updated'))`.
-   - Both recruiter and student components listen to this event to keep applicants, review counts, and job listings instantly synchronized without a WebSocket backend.
+4. **Session Seat Management & Cancellation Locking**:
+   - Booking a skill session decrements available seats in real time and guards against overbooking.
+   - Cancelling increments the available seats back by 1.
+   - If a meeting link has been provided by the host, cancellation is strictly locked and throws an error if attempted.
+5. **Cross-Component Event Bus**:
+   - Updates dispatch `window.dispatchEvent(new CustomEvent('kairos_application_updated'))` and `new Event('kairos_sessions_updated')`.
+   - Both recruiter and student components listen to these events to keep applicants, review counts, session seats, and meeting links instantly synchronized without a WebSocket backend.
 
 ---
 

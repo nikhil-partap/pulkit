@@ -505,14 +505,27 @@ const mockApi = {
       if (!session) throw new Error('This session is no longer available.');
       if (Number(session.student_id) === Number(studentId)) throw new Error('You cannot book your own session.');
       if (sessionBookings.some((booking) => Number(booking.student_id) === Number(studentId) && Number(booking.session_id) === Number(sessionId))) return { message: 'Already booked.' };
+      if (Number(session.seats) <= 0) throw new Error('No seats left for this session.');
+      session.seats = Math.max(0, Number(session.seats) - 1);
       sessionBookings.push({ id: Date.now(), student_id: Number(studentId), session_id: Number(sessionId) });
+      saveStoredSessions(skillSessions);
       saveStoredBookings(sessionBookings);
-      return { message: 'Session booked.' };
+      return { message: 'Session booked.', seats: session.seats };
     }),
 
   cancelSkillSessionBooking: async (studentId, sessionId) =>
     asyncWrap(() => {
+      skillSessions = loadStoredSessions();
       sessionBookings = loadStoredBookings();
+      const session = skillSessions.find((item) => Number(item.id) === Number(sessionId));
+      if (session && session.meetingLink && session.meetingLink.trim()) {
+        throw new Error('This session cannot be cancelled because the meeting link has already been provided.');
+      }
+      const hadBooking = sessionBookings.some((booking) => Number(booking.student_id) === Number(studentId) && Number(booking.session_id) === Number(sessionId));
+      if (hadBooking && session) {
+        session.seats = Number(session.seats) + 1;
+        saveStoredSessions(skillSessions);
+      }
       sessionBookings = sessionBookings.filter((booking) => !(Number(booking.student_id) === Number(studentId) && Number(booking.session_id) === Number(sessionId)));
       saveStoredBookings(sessionBookings);
       return { message: 'Booking cancelled.' };
