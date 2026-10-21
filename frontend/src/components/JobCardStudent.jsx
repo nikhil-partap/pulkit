@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BadgeCheck, MapPin, Clock, Star, Sparkles, XCircle } from 'lucide-react';
+import { BadgeCheck, MapPin, Clock, Star, Sparkles, XCircle, PauseCircle } from 'lucide-react';
 
 export default function JobCardStudent({
   job,
@@ -8,26 +8,40 @@ export default function JobCardStudent({
   application,
   onToggleSave,
 }) {
-  const vacanciesCount = Number(job.vacancies || 1);
-  const vacancyLabel = vacanciesCount === 1 ? '1 opening' : `${vacanciesCount} openings`;
+  const vacanciesCount = job.vacancies !== undefined ? Number(job.vacancies) : 1;
+  const vacancyLabel = vacanciesCount === 0 ? '0 openings left' : vacanciesCount === 1 ? '1 opening' : `${vacanciesCount} openings`;
   const isAccepted = application?.status === 'Accepted';
   const isRejected = application?.status === 'Rejected';
+  const isPaused = job.status === 'Paused' || vacanciesCount === 0;
 
   return (
     <article className={`student-job-card compact-job-card ${isAccepted ? 'card-accepted-glow' : ''} ${isRejected ? 'card-rejected-glow' : ''}`}>
       <div className="job-card-top">
-        <span className="status active">Live now</span>
-        {isAccepted ? (
-          <span className="student-accepted-pill">
-            <Sparkles size={12} style={{ marginRight: '4px' }} /> Accepted
-          </span>
-        ) : isRejected ? (
-          <span className="student-rejected-pill">
-            <XCircle size={12} style={{ marginRight: '4px' }} /> Application Rejected
+        {isPaused ? (
+          <span className="status paused">
+            <PauseCircle size={12} style={{ marginRight: '3px', verticalAlign: '-1px' }} />
+            Paused
           </span>
         ) : (
-          <span className="opening-chip">{vacancyLabel}</span>
+          <span className="status active">Live now</span>
         )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {isPaused && isAccepted && (
+            <span className="accepted-job-paused-pill">Positions Filled</span>
+          )}
+          {isAccepted ? (
+            <span className="student-accepted-pill">
+              <Sparkles size={12} style={{ marginRight: '4px' }} /> Accepted
+            </span>
+          ) : isRejected ? (
+            <span className="student-rejected-pill">
+              <XCircle size={12} style={{ marginRight: '4px' }} /> Application Rejected
+            </span>
+          ) : (
+            <span className="opening-chip">{vacancyLabel}</span>
+          )}
+        </div>
       </div>
 
       <div className="compact-job-heading">
@@ -52,13 +66,6 @@ export default function JobCardStudent({
         </span>
       </div>
       <p className="compact-job-note">{job.type || 'On-site'} · Posted recently</p>
-
-      {isAccepted && (
-        <div className="student-accepted-callout">
-          <strong>Application Accepted!</strong>
-          <p>The hiring team accepted your application. You will be contacted via your registered email.</p>
-        </div>
-      )}
 
       {isRejected && (
         <div className="student-rejected-callout">

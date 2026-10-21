@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { api } from '../services/api';
 
-export const loadActiveJobs = createAsyncThunk('jobs/loadActive', () => api.getActiveJobs());
+export const loadActiveJobs = createAsyncThunk('jobs/loadActive', (studentId) => api.getActiveJobs(studentId));
 export const loadRecruiterJobs = createAsyncThunk('jobs/loadRecruiter', (recruiterId) => api.getRecruiterJobs(recruiterId));
 export const createJob = createAsyncThunk('jobs/create', (job) => api.postJob(job));
 export const changeJobStatus = createAsyncThunk('jobs/changeStatus', ({ jobId, recruiterId, status }) => api.updateJobStatus(jobId, recruiterId, status));

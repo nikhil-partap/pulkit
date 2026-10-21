@@ -54,7 +54,7 @@ export default function StudentDashboard() {
     setError('');
     try {
       const [, savedRes, appsRes] = await Promise.all([
-        dispatch(loadActiveJobs()).unwrap(),
+        dispatch(loadActiveJobs(user.id)).unwrap(),
         api.getSavedJobIds(user.id),
         api.getStudentApplications(user.id),
       ]);
@@ -76,11 +76,13 @@ export default function StudentDashboard() {
       loadData();
     };
     window.addEventListener('kairos_application_updated', handleSync);
+    window.addEventListener('kairos_jobs_updated', handleSync);
     window.addEventListener('kairos_message_sent', handleSync);
     window.addEventListener('storage', handleSync);
 
     return () => {
       window.removeEventListener('kairos_application_updated', handleSync);
+      window.removeEventListener('kairos_jobs_updated', handleSync);
       window.removeEventListener('kairos_message_sent', handleSync);
       window.removeEventListener('storage', handleSync);
     };

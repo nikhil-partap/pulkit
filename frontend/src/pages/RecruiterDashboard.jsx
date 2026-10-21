@@ -52,21 +52,33 @@ export default function RecruiterDashboard() {
     loadData();
     const handleAppUpdated = () => { loadData(); };
     window.addEventListener('kairos_application_updated', handleAppUpdated);
+    window.addEventListener('kairos_jobs_updated', handleAppUpdated);
     window.addEventListener('storage', handleAppUpdated);
     return () => {
       window.removeEventListener('kairos_application_updated', handleAppUpdated);
+      window.removeEventListener('kairos_jobs_updated', handleAppUpdated);
       window.removeEventListener('storage', handleAppUpdated);
     };
   }, [user?.id]);
 
   const handleAcceptApplicant = async (applicationId) => {
     try {
-      await api.updateApplicationStatus(applicationId, user.id, 'Accepted');
+      const res = await api.updateApplicationStatus(applicationId, user.id, 'Accepted');
       setApplications((prev) =>
         prev.map((a) => (a.application_id === applicationId ? { ...a, status: 'Accepted' } : a))
       );
+      if (user?.id) {
+        await dispatch(loadRecruiterJobs(user.id)).unwrap();
+      }
       const applicant = applications.find((item) => item.application_id === applicationId);
       addNotification({ title: 'Application accepted', body: `Your application for ${applicant?.job_title || 'the role'} was accepted.`, type: 'application', recipient: { role: 'Student', id: applicant?.student_id } });
+      if (res?.autoPaused) {
+        addNotification({
+          title: 'Job Auto-Paused',
+          body: `All positions filled for "${applicant?.job_title || 'Job Listing'}". The listing has been automatically paused.`,
+          type: 'application'
+        });
+      }
     } catch (err) {
       console.error('Error accepting applicant:', err);
       loadData();

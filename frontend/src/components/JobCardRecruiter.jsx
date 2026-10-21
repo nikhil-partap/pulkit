@@ -11,7 +11,7 @@ export default function JobCardRecruiter({
   onRejectApplicant,
 }) {
   const jobApps = applications.filter((app) => app.job_id === job.id);
-  const vacanciesCount = Number(job.vacancies || 1);
+  const vacanciesCount = job.vacancies !== undefined ? Number(job.vacancies) : 1;
 
   return (
     <article className="job-card">
@@ -53,7 +53,9 @@ export default function JobCardRecruiter({
       </p>
 
       <p className="vacancy-note">
-        {vacanciesCount} {vacanciesCount === 1 ? 'vacancy' : 'vacancies'} available
+        {vacanciesCount === 0
+          ? '0 vacancies left (Auto-paused)'
+          : `${vacanciesCount} ${vacanciesCount === 1 ? 'vacancy' : 'vacancies'} available`}
       </p>
 
       <p className="job-description">{job.description}</p>
