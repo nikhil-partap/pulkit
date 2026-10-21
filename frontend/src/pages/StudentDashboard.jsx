@@ -164,7 +164,11 @@ export default function StudentDashboard() {
 
   return (
     <div className="dashboard-screen student-screen">
-      <Navbar workspaceLabel="Student workspace" />
+      <Navbar
+        workspaceLabel="Student workspace"
+        activePage={activePage}
+        onNavChange={handlePageChange}
+      />
 
       <div className="student-workspace-layout">
         <StudentSidebar activePage={activePage} onChange={handlePageChange} />

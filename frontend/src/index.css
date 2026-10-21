@@ -1444,8 +1444,9 @@ textarea {
 }
 
 @media (max-width: 860px) {
-  .student-workspace-layout { width: min(100% - 32px, 1180px); grid-template-columns: 1fr; gap: 0; }
-  .student-sidebar { position: static; margin: 20px 0 0; padding: 8px; display: flex; align-items: center; gap: 10px; }.student-sidebar-label, .student-sidebar-note { display: none; }.student-sidebar nav { display: flex; flex: 1; }.student-sidebar button { justify-content: center; }.student-sidebar button span { flex: initial; }.student-sidebar button svg:last-child { display: none; }.student-workspace-content { padding-top: 28px; }
+  .student-workspace-layout { width: min(100% - 32px, 1180px); grid-template-columns: 1fr !important; gap: 0; }
+  .student-sidebar { display: none !important; }
+  .student-workspace-content { padding-top: 24px; }
   .login-page {
     grid-template-columns: 1fr;
   }
@@ -3313,5 +3314,656 @@ textarea {
   background: rgba(23, 107, 89, 0.25);
   border-color: rgba(23, 107, 89, 0.45);
   color: #79d6bf;
+}
+
+/* ========================================================
+   COMPREHENSIVE MOBILE RESPONSIVENESS
+   (Phones & Tablets: 320px - 860px)
+   ======================================================== */
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+@media (max-width: 860px) {
+  /* Workspaces: Stack sidebars neatly */
+  .student-workspace-layout,
+  .recruiter-workspace-layout {
+    width: 100% !important;
+    padding: 0 14px !important;
+    grid-template-columns: 1fr !important;
+    gap: 0 !important;
+  }
+
+  /* Hide student sidebar on mobile screens since navigation is handled by header menu */
+  .student-sidebar {
+    display: none !important;
+  }
+
+  /* Recruiter sidebar: App bar style with smooth horizontal touch scroll */
+  .recruiter-sidebar {
+    position: static !important;
+    width: 100% !important;
+    margin: 14px 0 0 !important;
+    padding: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    border-radius: 12px !important;
+  }
+
+  .recruiter-sidebar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .recruiter-sidebar-label,
+  .recruiter-sidebar-post-nudge {
+    display: none !important;
+  }
+
+  .recruiter-sidebar nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    flex: 1 !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .recruiter-sidebar button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    justify-content: center !important;
+  }
+
+  .recruiter-sidebar button svg:last-child {
+    display: none !important;
+  }
+
+  .recruiter-sidebar .student-sidebar-settings {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+  }
+
+  .student-workspace-content,
+  .recruiter-workspace-main,
+  .dashboard-main {
+    width: 100% !important;
+    padding: 20px 0 60px !important;
+  }
+
+  /* Overview cards in recruiter dashboard */
+  .recruiter-overview-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  /* Two-column dashboard grids stack cleanly */
+  .dashboard-grid,
+  .recruiter-workspace-layout .dashboard-grid,
+  .student-jobs-grid,
+  .skill-session-grid,
+  .booked-sessions-grid,
+  .job-detail-grid,
+  .profile-grid,
+  .company-profile-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Navbar adjustments */
+  .dashboard-header {
+    height: 60px !important;
+    padding: 0 14px !important;
+    gap: 10px !important;
+  }
+
+  .dashboard-brand {
+    font-size: 20px !important;
+    gap: 6px !important;
+  }
+
+  .dashboard-brand-logo-img {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .workspace-label {
+    font-size: 10px !important;
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .notification-popover {
+    width: calc(100vw - 28px) !important;
+    right: -6px !important;
+  }
+
+  /* Hero banners */
+  .dashboard-intro,
+  .student-hero,
+  .recruiter-page-hero,
+  .skill-exchange-hero,
+  .session-page-header,
+  .applications-hero,
+  .notifications-hero,
+  .profile-hero,
+  .company-profile-hero,
+  .job-detail-hero {
+    padding: 20px 16px !important;
+    border-radius: 14px !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+    min-height: auto !important;
+    margin-bottom: 20px !important;
+  }
+
+  .dashboard-intro h1,
+  .student-hero h1,
+  .recruiter-page-hero h1,
+  .skill-exchange-hero h1,
+  .session-page-header h1,
+  .applications-hero h1,
+  .notifications-hero h1,
+  .profile-hero h1,
+  .company-profile-hero h1,
+  .job-detail-hero h1 {
+    font-size: 26px !important;
+    line-height: 1.15 !important;
+    margin: 4px 0 8px !important;
+  }
+
+  /* Hero stats */
+  .intro-stat,
+  .recruiter-hero-stat,
+  .skill-hero-stat,
+  .application-hero-stat,
+  .notification-count {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 12px !important;
+  }
+
+  /* Panels */
+  .student-jobs-section,
+  .job-form-card,
+  .jobs-panel,
+  .skill-exchange-panel,
+  .session-form-panel,
+  .my-sessions-panel,
+  .applications-panel,
+  .notifications-panel,
+  .recruiter-standalone-card,
+  .job-detail-card,
+  .recruiter-detail-card,
+  .profile-card,
+  .portfolio-edit-form {
+    padding: 18px 14px !important;
+    border-radius: 12px !important;
+    margin-top: 18px !important;
+  }
+
+  .section-heading,
+  .student-section-bar,
+  .skill-panel-heading,
+  .applications-panel-heading,
+  .notifications-panel-heading {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding-bottom: 14px !important;
+  }
+
+  .section-heading h2,
+  .student-section-bar h2,
+  .skill-panel-heading h2,
+  .applications-panel-heading h2,
+  .notifications-panel-heading h2 {
+    font-size: 20px !important;
+  }
+
+  /* Filter bars & search boxes */
+  .job-tools,
+  .skill-tools {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .search-box,
+  .skill-search {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .tab-pills-group,
+  .skill-topic-tabs,
+  .application-tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 3px !important;
+    width: 100% !important;
+  }
+
+  .tab-pills-group button,
+  .skill-topic-tabs button,
+  .application-tabs button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Form layouts */
+  .two-fields,
+  .three-fields,
+  .session-form-row,
+  .session-form-row-three,
+  .project-link-fields {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Recruiter applicant card & list rows */
+  .recruiter-applicant-row {
+    grid-template-columns: 36px 1fr !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+
+  .recruiter-applicant-actions {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 6px !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--line) !important;
+  }
+
+  .applicant-card {
+    padding: 14px !important;
+  }
+
+  .applicant-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    margin-top: 10px !important;
+  }
+
+  .applicant-actions button,
+  .applicant-actions a {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  /* Application rows */
+  .application-row {
+    grid-template-columns: 8px 1fr !important;
+    gap: 10px !important;
+    padding: 14px 12px !important;
+  }
+
+  .application-pay {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--line) !important;
+  }
+
+  /* My session rows */
+  .my-session-row {
+    grid-template-columns: 36px 1fr !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+
+  .my-session-actions {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    margin-top: 6px !important;
+    padding-top: 8px !important;
+    border-top: 1px dashed var(--line) !important;
+  }
+
+  /* Meeting link cards */
+  .meeting-link-available,
+  .meeting-link-pending {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .join-meeting-btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Modal cards */
+  .provide-link-modal-card {
+    padding: 18px 14px !important;
+    margin: 0 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .provide-link-modal-actions {
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+  }
+
+  .provide-link-modal-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Job details action bar */
+  .job-detail-actions {
+    width: 100% !important;
+  }
+
+  .job-detail-actions button {
+    width: 100% !important;
+  }
+
+  /* Toast notification */
+  .toast-region {
+    left: 12px !important;
+    right: 12px !important;
+    bottom: 12px !important;
+    width: calc(100% - 24px) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Smaller phones */
+  .student-hero h1,
+  .dashboard-intro h1 {
+    font-size: 24px !important;
+  }
+
+  .recruiter-overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .student-job-card,
+  .job-card {
+    padding: 14px 12px !important;
+  }
+
+  .job-card-actions {
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .job-card-actions a,
+  .job-card-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .accepted-indicator-badge,
+  .rejected-indicator-badge {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+/* ========================================================
+   STUDENT MOBILE MENU & NAVIGATION DRAWER
+   ======================================================== */
+.navbar-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 150;
+  width: 100%;
+}
+
+.header-mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--green);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: 6px;
+}
+
+.header-mobile-menu-btn:hover,
+.header-mobile-menu-btn.active {
+  background: var(--light-green);
+  color: var(--green-hover);
+  border-color: var(--green);
+}
+
+/* Mobile Slide-down Drawer */
+.mobile-nav-drawer {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
+  animation: slideDownNav 0.2s ease-out;
+  z-index: 200;
+  max-height: calc(100vh - 70px);
+  overflow-y: auto;
+}
+
+@keyframes slideDownNav {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-nav-drawer-links {
+  padding: 12px 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.drawer-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.drawer-link svg {
+  color: var(--green);
+  flex-shrink: 0;
+}
+
+.drawer-link div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawer-link strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.drawer-link small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.drawer-link:hover {
+  background: var(--light-green);
+}
+
+.drawer-link.active {
+  background: var(--green);
+  color: #ffffff;
+}
+
+.drawer-link.active svg {
+  color: #ffffff;
+}
+
+.drawer-link.active small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Dark Theme Support */
+.dark-theme .header-mobile-menu-btn {
+  background: #161b22;
+  border-color: #2d333b;
+  color: #9be2c8;
+}
+
+.dark-theme .mobile-nav-drawer {
+  background: #161b22;
+  border-color: #2d333b;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .drawer-link {
+  color: #e6edf3;
+}
+
+.drawer-divider {
+  height: 1px;
+  background: var(--line);
+  margin: 8px 4px;
+}
+
+.drawer-section-title {
+  padding: 6px 14px 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.drawer-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+}
+
+.drawer-theme-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.drawer-theme-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.drawer-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font: 700 11px "DM Sans", sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.drawer-theme-btn.active,
+.drawer-theme-btn:hover {
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+
+.drawer-link.drawer-logout {
+  color: var(--error);
+}
+
+.drawer-link.drawer-logout svg {
+  color: var(--error);
+}
+
+.drawer-link.drawer-logout:hover {
+  background: #fdf2f2;
+}
+
+.dark-theme .drawer-divider {
+  background: #2d333b;
+}
+
+.dark-theme .drawer-theme-btn {
+  background: #21262d;
+  border-color: #30363d;
+  color: #8b949e;
+}
+
+.dark-theme .drawer-theme-btn.active {
+  background: #27a478;
+  color: #fff;
+}
+
+.dark-theme .drawer-link.drawer-logout:hover {
+  background: rgba(180, 60, 54, 0.15);
+}
+
+.dark-theme .drawer-link:hover {
+  background: #1a382e;
+}
+
+.dark-theme .drawer-link.active {
+  background: #27a478;
+  color: #ffffff;
+}
+
+/* Mobile Visibility Controls */
+@media (max-width: 860px) {
+  .header-mobile-menu-btn {
+    display: inline-flex !important;
+  }
 }
 
