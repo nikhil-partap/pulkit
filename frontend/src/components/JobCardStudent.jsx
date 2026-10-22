@@ -36,7 +36,7 @@ export default function JobCardStudent({
             </span>
           ) : isRejected ? (
             <span className="student-rejected-pill">
-              <XCircle size={12} style={{ marginRight: '4px' }} /> Application Rejected
+              <XCircle size={12} style={{ marginRight: '4px' }} /> Rejected
             </span>
           ) : (
             <span className="opening-chip">{vacancyLabel}</span>
@@ -66,13 +66,6 @@ export default function JobCardStudent({
         </span>
       </div>
       <p className="compact-job-note">{job.type || 'On-site'} · Posted recently</p>
-
-      {isRejected && (
-        <div className="student-rejected-callout">
-          <strong>Application Not Selected</strong>
-          <p>The recruiter has reviewed your application and decided not to proceed for this role.</p>
-        </div>
-      )}
 
       <div className="job-card-actions">
         <Link to={`/jobs/${job.id}`} className="job-details-link">View details <span>→</span></Link>

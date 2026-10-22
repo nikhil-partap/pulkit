@@ -187,35 +187,9 @@ export default function StudentDashboard() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {acceptedJobIds.length > 0 && (
-              <button
-                type="button"
-                className="accepted-indicator-badge"
-                onClick={() => setFilterTab('accepted')}
-              >
-                <Sparkles size={14} />
-                <strong>{acceptedJobIds.length}</strong>
-                <span>Accepted Application{acceptedJobIds.length === 1 ? '' : 's'}</span>
-              </button>
-            )}
-
-            {rejectedJobIds.length > 0 && (
-              <button
-                type="button"
-                className="rejected-indicator-badge"
-                onClick={() => setFilterTab('rejected')}
-              >
-                <XCircle size={14} />
-                <strong>{rejectedJobIds.length}</strong>
-                <span>Application{rejectedJobIds.length === 1 ? '' : 's'} Declined</span>
-              </button>
-            )}
-
-            <div className="live-indicator">
-              <span />
-              <strong>{jobs.length}</strong> live jobs
-            </div>
+          <div className="live-indicator">
+            <span />
+            <strong>{jobs.length}</strong> live jobs
           </div>
         </section>
 
