@@ -24,7 +24,15 @@ export default function JobCardRecruiter({
             type="button"
             className="job-action"
             onClick={() => onToggleStatus(job.id, job.status)}
-            title={job.status === 'Active' ? 'Pause listings' : 'Activate listings'}
+            disabled={job.status === 'Paused' && vacanciesCount === 0}
+            title={
+              job.status === 'Paused' && vacanciesCount === 0
+                ? 'All vacancies filled (Auto-paused)'
+                : job.status === 'Active'
+                ? 'Pause listing'
+                : 'Activate listing'
+            }
+            style={job.status === 'Paused' && vacanciesCount === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
           >
             <Power size={12} style={{ marginRight: '3px', verticalAlign: 'middle' }} />
             {job.status === 'Active' ? 'Pause' : 'Activate'}
@@ -101,7 +109,9 @@ export default function JobCardRecruiter({
                           type="button"
                           className="accept-applicant-btn"
                           onClick={() => onAcceptApplicant && onAcceptApplicant(app.application_id)}
-                          title="Accept this student's application"
+                          disabled={vacanciesCount === 0}
+                          style={vacanciesCount === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                          title={vacanciesCount === 0 ? 'No vacancies remaining' : "Accept this student's application"}
                         >
                           <Check size={13} style={{ marginRight: '4px' }} />
                           Accept Application

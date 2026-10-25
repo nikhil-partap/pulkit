@@ -13,6 +13,7 @@ import { api } from '../services/api';
 import { useDispatch, useSelector } from 'react-redux';
 import { loadActiveJobs } from '../store/jobsSlice';
 import { Search, Sparkles, Bookmark, RefreshCw, FileText, XCircle } from 'lucide-react';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -27,6 +28,8 @@ export default function StudentDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [withdrawModalData, setWithdrawModalData] = useState(null);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
   const initialTab = searchParams.get('tab') || searchParams.get('page') || location.state?.activePage || 'jobs';
   const [activePage, setActivePage] = useState(initialTab);
 
@@ -106,17 +109,43 @@ export default function StudentDashboard() {
 
   const handleToggleApply = async (jobId) => {
     const isApplied = appliedJobIds.includes(jobId);
-    try {
-      if (isApplied) {
-        setStudentApplications((prev) => prev.filter((a) => Number(a.job_id) !== Number(jobId)));
-        await api.withdrawApplication(jobId, user.id);
-      } else {
-        await api.applyForJob(jobId, user.id);
-        await loadData();
+    if (isApplied) {
+      const currentApp = studentApplications.find((a) => Number(a.job_id) === Number(jobId));
+      if (currentApp?.status === 'Accepted') {
+        return;
       }
+      const currentJob = jobs.find((j) => Number(j.id) === Number(jobId));
+      setWithdrawModalData({
+        jobId,
+        isAccepted: false,
+        jobTitle: currentJob?.title || 'this role',
+      });
+      return;
+    }
+    try {
+      await api.applyForJob(jobId, user.id);
+      await loadData();
     } catch (err) {
       console.error('Failed to update application status:', err);
+      alert(err.message || 'Failed to update application status.');
       loadData();
+    }
+  };
+
+  const confirmDashboardWithdraw = async () => {
+    if (!withdrawModalData) return;
+    setIsWithdrawing(true);
+    try {
+      setStudentApplications((prev) => prev.filter((a) => Number(a.job_id) !== Number(withdrawModalData.jobId)));
+      await api.withdrawApplication(withdrawModalData.jobId, user.id);
+      setWithdrawModalData(null);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to withdraw application:', err);
+      alert(err.message || 'Failed to withdraw application.');
+      loadData();
+    } finally {
+      setIsWithdrawing(false);
     }
   };
 
@@ -138,9 +167,24 @@ export default function StudentDashboard() {
 
 
 
+  const liveJobs = useMemo(() => {
+    return jobs.filter((job) => {
+      const vac = job.vacancies !== undefined ? Number(job.vacancies) : 1;
+      const isPaused = job.status === 'Paused' || vac <= 0;
+      const isAccepted = acceptedJobIds.includes(job.id);
+      const isRejected = rejectedJobIds.includes(job.id);
+      // Don't show paused opportunities to ones who have not applied yet,
+      // but do show them to ones who got rejected or selected
+      if (isPaused) {
+        return isAccepted || isRejected;
+      }
+      return true;
+    });
+  }, [jobs, acceptedJobIds, rejectedJobIds]);
+
   const filteredJobs = useMemo(() => {
     const term = searchTerm.trim().toLowerCase();
-    return jobs.filter((job) => {
+    return liveJobs.filter((job) => {
       const matchesSearch =
         !term ||
         `${job.title} ${job.location} ${job.type} ${job.company} ${job.recruiter_name || ''}`
@@ -160,7 +204,7 @@ export default function StudentDashboard() {
 
       return matchesSearch && matchesFilter;
     });
-  }, [jobs, searchTerm, filterTab, savedJobIds, appliedJobIds, acceptedJobIds, rejectedJobIds]);
+  }, [liveJobs, searchTerm, filterTab, savedJobIds, appliedJobIds, acceptedJobIds, rejectedJobIds]);
 
   return (
     <div className="dashboard-screen student-screen">
@@ -189,7 +233,7 @@ export default function StudentDashboard() {
 
           <div className="live-indicator">
             <span />
-            <strong>{jobs.length}</strong> live jobs
+            <strong>{jobs.filter((j) => j.status === 'Active' && (j.vacancies === undefined || Number(j.vacancies) > 0)).length}</strong> live jobs
           </div>
         </section>
 
@@ -227,7 +271,7 @@ export default function StudentDashboard() {
                   className={`text-action ${filterTab === 'all' ? 'selected' : ''}`}
                   onClick={() => setFilterTab('all')}
                 >
-                  All ({jobs.length})
+                  All ({liveJobs.length})
                 </button>
 
                 {acceptedJobIds.length > 0 && (
@@ -357,6 +401,18 @@ export default function StudentDashboard() {
         </section>
         </main>}
       </div>
+
+      <ConfirmationModal
+        isOpen={Boolean(withdrawModalData)}
+        title="Withdraw Application"
+        message="Are you sure you want to withdraw your application?"
+        subMessage={`Your application for "${withdrawModalData?.jobTitle || 'this role'}" will be removed from recruiter review.`}
+        confirmText="Yes, withdraw"
+        cancelText="Cancel"
+        isLoading={isWithdrawing}
+        onConfirm={confirmDashboardWithdraw}
+        onCancel={() => setWithdrawModalData(null)}
+      />
     </div>
   );
 }

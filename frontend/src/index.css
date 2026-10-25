@@ -1857,6 +1857,35 @@ body {
   background: #e2f3eb;
 }
 
+.detail-apply.paused-btn,
+.detail-apply:disabled:not(.accepted):not(.rejected) {
+  background: #64748b !important;
+  color: #f8fafc !important;
+  cursor: not-allowed !important;
+  opacity: 0.85;
+}
+
+.detail-withdraw-btn {
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: 700 12px "DM Sans", sans-serif;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  transition: all 0.2s ease;
+}
+
+.detail-withdraw-btn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
 .detail-save {
   border: 1px solid rgba(255, 255, 255, .35);
   color: #fff;
@@ -8850,4 +8879,199 @@ body {
   .header-mobile-menu-btn {
     display: inline-flex !important;
   }
+}
+
+/* Kairos Custom Confirmation Modal */
+.kairos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(5px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.kairos-modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--line, #e2e8f0);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: modalSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.kairos-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kairos-modal-icon-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
+}
+
+.kairos-modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--muted, #66766f);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.kairos-modal-close-btn:hover {
+  background: var(--cream, #f1f5f9);
+  color: var(--ink, #172b26);
+}
+
+.kairos-modal-body h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--ink, #172b26);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.kairos-modal-submessage {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--muted, #66766f);
+  line-height: 1.5;
+}
+
+.kairos-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line, #e2e8f0);
+}
+
+.kairos-modal-cancel-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--line, #d9e3dd);
+  background: var(--surface, #ffffff);
+  color: var(--ink, #172b26);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.kairos-modal-cancel-btn:hover {
+  background: var(--cream, #f5f7f4);
+  border-color: #cbd5e1;
+}
+
+.kairos-modal-confirm-btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+  transition: all 0.15s ease;
+}
+
+.kairos-modal-confirm-btn:hover {
+  background: #b91c1c;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
+  transform: translateY(-1px);
+}
+
+.kairos-modal-confirm-btn:active {
+  transform: translateY(0);
+}
+
+/* Dark mode support */
+.dark-theme .kairos-modal-card {
+  background: #15221f;
+  border-color: #243833;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+.dark-theme .kairos-modal-icon-badge {
+  background: rgba(220, 38, 38, 0.18);
+  border-color: rgba(220, 38, 38, 0.3);
+  color: #f87171;
+}
+
+.dark-theme .kairos-modal-close-btn {
+  color: #8fa099;
+}
+
+.dark-theme .kairos-modal-close-btn:hover {
+  background: #1c2e2a;
+  color: #f0fdf4;
+}
+
+.dark-theme .kairos-modal-body h2 {
+  color: #f0fdf4;
+}
+
+.dark-theme .kairos-modal-submessage {
+  color: #9cb2aa;
+}
+
+.dark-theme .kairos-modal-actions {
+  border-top-color: #243833;
+}
+
+.dark-theme .kairos-modal-cancel-btn {
+  background: #1c2e2a;
+  border-color: #2c423c;
+  color: #e2ece7;
+}
+
+.dark-theme .kairos-modal-cancel-btn:hover {
+  background: #253d37;
+  border-color: #3b5952;
 }

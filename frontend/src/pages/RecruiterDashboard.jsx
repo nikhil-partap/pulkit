@@ -80,22 +80,46 @@ export default function RecruiterDashboard() {
     try {
       const res = await api.updateApplicationStatus(applicationId, user.id, 'Accepted');
       setApplications((prev) =>
-        prev.map((a) => (a.application_id === applicationId ? { ...a, status: 'Accepted' } : a))
+        prev.map((a) => {
+          if (a.application_id === applicationId) {
+            return { ...a, status: 'Accepted' };
+          }
+          if (res?.autoPaused && res?.autoRejectedApplicants?.some((rej) => rej.application_id === a.application_id)) {
+            return { ...a, status: 'Rejected' };
+          }
+          return a;
+        })
       );
       if (user?.id) {
         await dispatch(loadRecruiterJobs(user.id)).unwrap();
       }
       const applicant = applications.find((item) => item.application_id === applicationId);
-      addNotification({ title: 'Application accepted', body: `Your application for ${applicant?.job_title || 'the role'} was accepted.`, type: 'application', recipient: { role: 'Student', id: applicant?.student_id } });
+      addNotification({
+        title: 'Application accepted',
+        body: `Your application for ${applicant?.job_title || 'the role'} was accepted.`,
+        type: 'application',
+        recipient: { role: 'Student', id: applicant?.student_id }
+      });
       if (res?.autoPaused) {
         addNotification({
-          title: 'Job Auto-Paused',
-          body: `All positions filled for "${applicant?.job_title || 'Job Listing'}". The listing has been automatically paused.`,
+          title: 'All Vacancies Filled',
+          body: `All positions filled for "${applicant?.job_title || 'Job Listing'}". The listing was paused and ${res.autoRejectedApplicants?.length || 0} remaining application(s) were automatically rejected.`,
           type: 'application'
         });
+        if (res.autoRejectedApplicants?.length) {
+          res.autoRejectedApplicants.forEach((rej) => {
+            addNotification({
+              title: 'Application update',
+              body: `All vacancies for "${applicant?.job_title || 'the role'}" have been filled. Your application has been closed.`,
+              type: 'application',
+              recipient: { role: 'Student', id: rej.student_id }
+            });
+          });
+        }
       }
     } catch (err) {
       console.error('Error accepting applicant:', err);
+      alert(err.message || 'Could not accept applicant.');
       loadData();
     }
   };
@@ -164,12 +188,19 @@ export default function RecruiterDashboard() {
   };
 
   const handleToggleStatus = async (jobId, currentStatus) => {
+    const targetJob = jobs.find((j) => Number(j.id) === Number(jobId));
+    const vac = targetJob?.vacancies !== undefined ? Number(targetJob.vacancies) : 1;
+    if (currentStatus === 'Paused' && vac <= 0) {
+      alert('Cannot activate this listing because 0 vacancies are left. Vacancies must be greater than 0 to activate.');
+      return;
+    }
     const newStatus = currentStatus === 'Active' ? 'Paused' : 'Active';
     try {
       await dispatch(changeJobStatus({ jobId, recruiterId: user.id, status: newStatus })).unwrap();
       await dispatch(loadRecruiterJobs(user.id)).unwrap();
     } catch (err) {
       console.error('Error updating status:', err);
+      alert(err.message || 'Error updating status');
       loadData();
     }
   };
@@ -414,14 +445,22 @@ export default function RecruiterDashboard() {
                   </span>
                   {app.status !== 'Accepted' && app.status !== 'Rejected' && (
                     <>
-                      <button
-                        type="button"
-                        className="recruiter-accept-btn"
-                        onClick={() => handleAcceptApplicant(app.application_id)}
-                        title="Accept applicant"
-                      >
-                        <CheckCircle2 size={13} /> Accept
-                      </button>
+                      {(() => {
+                        const targetJob = jobs.find((j) => Number(j.id) === Number(app.job_id));
+                        const isNoVacancies = targetJob && Number(targetJob.vacancies) <= 0;
+                        return (
+                          <button
+                            type="button"
+                            className="recruiter-accept-btn"
+                            onClick={() => handleAcceptApplicant(app.application_id)}
+                            disabled={isNoVacancies}
+                            style={isNoVacancies ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
+                            title={isNoVacancies ? 'All vacancies filled' : 'Accept applicant'}
+                          >
+                            <CheckCircle2 size={13} /> Accept
+                          </button>
+                        );
+                      })()}
                       <button
                         type="button"
                         className="recruiter-reject-btn"

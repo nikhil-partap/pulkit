@@ -30,7 +30,25 @@ const INITIAL_APPLICATIONS = [
 const loadStoredApplications = () => {
   try {
     const raw = localStorage.getItem('kairos_applications');
-    if (raw) return JSON.parse(raw);
+    let apps = raw ? JSON.parse(raw) : [...INITIAL_APPLICATIONS];
+    const jobsRaw = localStorage.getItem('kairos_jobs');
+    const jobsList = jobsRaw ? JSON.parse(jobsRaw) : INITIAL_JOBS;
+    let modified = false;
+    apps = apps.map((app) => {
+      const job = jobsList.find((j) => Number(j.id) === Number(app.job_id));
+      const vac = job?.vacancies !== undefined ? Number(job.vacancies) : 1;
+      if (job && vac <= 0 && app.status !== 'Accepted' && app.status !== 'Rejected') {
+        app.status = 'Rejected';
+        app.auto_rejected = true;
+        app.rejected_reason = 'All vacancies filled';
+        modified = true;
+      }
+      return app;
+    });
+    if (modified) {
+      localStorage.setItem('kairos_applications', JSON.stringify(apps));
+    }
+    return apps;
   } catch {}
   return [...INITIAL_APPLICATIONS];
 };
@@ -45,7 +63,20 @@ const saveStoredApplications = (apps) => {
 const loadStoredJobs = () => {
   try {
     const raw = localStorage.getItem('kairos_jobs');
-    if (raw) return JSON.parse(raw);
+    let items = raw ? JSON.parse(raw) : [...INITIAL_JOBS];
+    let modified = false;
+    items = items.map((j) => {
+      const vac = j.vacancies !== undefined ? Number(j.vacancies) : 1;
+      if (vac <= 0 && j.status !== 'Paused') {
+        j.status = 'Paused';
+        modified = true;
+      }
+      return j;
+    });
+    if (modified) {
+      localStorage.setItem('kairos_jobs', JSON.stringify(items));
+    }
+    return items;
   } catch {}
   return [...INITIAL_JOBS];
 };
@@ -322,24 +353,65 @@ const mockApi = {
     }),
 
   // Student Actions
+  getJobById: async (jobId) =>
+    asyncWrap(() => {
+      jobs = loadStoredJobs();
+      recruiters = loadStoredRecruiters();
+      const job = jobs.find((j) => Number(j.id) === Number(jobId));
+      if (!job) return null;
+      const recruiter = recruiters.find((r) => Number(r.recruiter_id) === Number(job.recruiter_id)) || {};
+      const vacancies = job.vacancies !== undefined ? Number(job.vacancies) : 1;
+      return {
+        id: job.id,
+        recruiter_id: job.recruiter_id,
+        title: job.title,
+        company: recruiter.company_name || job.company || 'Dr Tea Cafe',
+        recruiter_name: recruiter.full_name || job.recruiter_name || 'Hiring Team',
+        recruiter_email: recruiter.email || job.recruiter_email || '',
+        recruiter_role: recruiter.job_title || job.recruiter_role || 'Recruiter',
+        industry: recruiter.industry || job.industry || 'Food & hospitality',
+        type: job.work_type,
+        location: job.location,
+        hours: job.hours,
+        pay: job.pay,
+        vacancies,
+        description: job.description,
+        status: vacancies <= 0 ? 'Paused' : job.status,
+        posted: 'recently',
+      };
+    }),
+
   getActiveJobs: async (studentId) =>
     asyncWrap(() => {
       jobs = loadStoredJobs();
       applications = loadStoredApplications();
       recruiters = loadStoredRecruiters();
-      const studentAppliedJobIds = studentId
-        ? new Set(applications.filter((a) => Number(a.student_id) === Number(studentId)).map((a) => Number(a.job_id)))
+      const studentDecisionJobIds = studentId
+        ? new Set(
+            applications
+              .filter(
+                (a) =>
+                  Number(a.student_id) === Number(studentId) &&
+                  (a.status === 'Accepted' || a.status === 'Rejected')
+              )
+              .map((a) => Number(a.job_id))
+          )
         : new Set();
       return jobs
-        .filter((j) => j.status === 'Active' || studentAppliedJobIds.has(Number(j.id)))
+        .filter((j) => {
+          const vac = j.vacancies !== undefined ? Number(j.vacancies) : 1;
+          const isLive = j.status === 'Active' && vac > 0;
+          return isLive || studentDecisionJobIds.has(Number(j.id));
+        })
         .map((job) => {
           const recruiter = recruiters.find((r) => r.recruiter_id === job.recruiter_id) || {};
+          const vacancies = job.vacancies !== undefined ? Number(job.vacancies) : 1;
           return {
             id: job.id,
             recruiter_id: job.recruiter_id,
             title: job.title,
-            company: recruiter.company_name || 'Dr Tea Cafe',
-            recruiter_name: recruiter.full_name || 'Hiring Team',
+            company: recruiter.company_name || job.company || 'Dr Tea Cafe',
+            recruiter_name: recruiter.full_name || job.recruiter_name || 'Hiring Team',
             recruiter_email: recruiter.email || '',
             recruiter_role: recruiter.job_title || 'Recruiter',
             industry: recruiter.industry || 'Food & hospitality',
@@ -347,9 +419,9 @@ const mockApi = {
             location: job.location,
             hours: job.hours,
             pay: job.pay,
-            vacancies: job.vacancies !== undefined ? Number(job.vacancies) : 1,
+            vacancies,
             description: job.description,
-            status: job.status,
+            status: vacancies <= 0 ? 'Paused' : job.status,
             posted: 'recently',
           };
         });
@@ -384,7 +456,10 @@ const mockApi = {
         };
       }
       const activeRoles = jobs
-        .filter((job) => Number(job.recruiter_id) === Number(recruiterId) && job.status === 'Active')
+        .filter((job) => {
+          const vac = job.vacancies !== undefined ? Number(job.vacancies) : 1;
+          return Number(job.recruiter_id) === Number(recruiterId) && job.status === 'Active' && vac > 0;
+        })
         .map((job) => ({ id: job.id, title: job.title, type: job.work_type, location: job.location, hours: job.hours, pay: job.pay }));
       return {
         id: recruiter.recruiter_id,
@@ -416,6 +491,15 @@ const mockApi = {
 
   applyForJob: async (jobId, studentId) =>
     asyncWrap(() => {
+      jobs = loadStoredJobs();
+      const job = jobs.find((j) => Number(j.id) === Number(jobId));
+      if (!job) throw new Error('Job listing not found.');
+
+      const vacancies = job.vacancies !== undefined ? Number(job.vacancies) : 1;
+      if (job.status === 'Paused' || vacancies <= 0) {
+        throw new Error('This job listing is currently paused and not accepting new applications.');
+      }
+
       applications = loadStoredApplications();
       students = loadStoredStudents();
       const student = students.find((s) => Number(s.id) === Number(studentId));
@@ -433,6 +517,9 @@ const mockApi = {
           created_at: new Date().toISOString()
         });
       } else {
+        if (existing.status === 'Accepted' || existing.status === 'Rejected') {
+          throw new Error(`Your application for this job has already been ${existing.status.toLowerCase()}.`);
+        }
         existing.status = 'Applied';
         existing.created_at = new Date().toISOString();
         if (student) {
@@ -449,14 +536,35 @@ const mockApi = {
   withdrawApplication: async (jobId, studentId) =>
     asyncWrap(() => {
       applications = loadStoredApplications();
-      applications = applications.filter((a) => !(Number(a.job_id) === Number(jobId) && Number(a.student_id) === Number(studentId)));
+      jobs = loadStoredJobs();
+
+      const appIndex = applications.findIndex(
+        (a) => Number(a.job_id) === Number(jobId) && Number(a.student_id) === Number(studentId)
+      );
+      if (appIndex === -1) {
+        return { message: 'Application not found or already withdrawn.' };
+      }
+
+      const existingApp = applications[appIndex];
+      if (existingApp.status === 'Accepted') {
+        throw new Error('Application cannot be withdrawn once you have been selected.');
+      }
+
+      applications.splice(appIndex, 1);
       saveStoredApplications(applications);
-      return { message: 'Application withdrawn.' };
+
+      return {
+        message: 'Application withdrawn.',
+        wasAccepted: false,
+        jobReactivated: false,
+      };
     }),
 
   getStudentApplications: async (studentId) =>
     asyncWrap(() => {
       applications = loadStoredApplications();
+      jobs = loadStoredJobs();
+      recruiters = loadStoredRecruiters();
       return applications
         .filter((a) => Number(a.student_id) === Number(studentId))
         .map((app) => {
@@ -466,6 +574,8 @@ const mockApi = {
             application_id: app.id,
             job_id: app.job_id,
             job_title: job.title || 'Job Listing',
+            job_status: job.status || 'Active',
+            vacancies: job.vacancies !== undefined ? Number(job.vacancies) : 1,
             work_type: job.work_type || 'On-site',
             location: job.location || '',
             pay: job.pay || '',
@@ -475,6 +585,14 @@ const mockApi = {
             company_name: recruiter.company_name || 'Verified Company',
             recruiter_email: recruiter.email || '',
           };
+        })
+        .filter((app) => {
+          // Don't show paused applications to students
+          const isPaused = app.job_status === 'Paused' || app.vacancies <= 0;
+          if (isPaused && app.status !== 'Accepted' && app.status !== 'Rejected') {
+            return false;
+          }
+          return true;
         });
     }),
 
@@ -534,30 +652,55 @@ const mockApi = {
       if (app.status === 'Accepted' || app.status === 'Rejected') {
         throw new Error(`Application decision is final (${app.status}) and cannot be changed.`);
       }
-      app.status = newStatus;
-      saveStoredApplications(applications);
-
       // When someone's job application is accepted: reduce open positions by 1 and auto-pause if no positions left
       let autoPaused = false;
       let remainingVacancies = 0;
+      const autoRejectedApplicants = [];
       if (newStatus === 'Accepted') {
         const job = jobs.find((j) => Number(j.id) === Number(app.job_id));
-        if (job) {
-          const currentVacancies = job.vacancies !== undefined ? Number(job.vacancies) : 1;
-          job.vacancies = Math.max(0, currentVacancies - 1);
-          remainingVacancies = job.vacancies;
-          if (job.vacancies === 0) {
-            job.status = 'Paused';
-            autoPaused = true;
-          }
-          saveStoredJobs(jobs);
+        if (!job) throw new Error('Job listing not found.');
+        const currentVacancies = job.vacancies !== undefined ? Number(job.vacancies) : 1;
+        if (currentVacancies <= 0) {
+          throw new Error('All vacancies for this role have already been filled.');
         }
+        job.vacancies = Math.max(0, currentVacancies - 1);
+        remainingVacancies = job.vacancies;
+        if (job.vacancies === 0) {
+          job.status = 'Paused';
+          autoPaused = true;
+
+          // Auto-reject all other pending applications for this job
+          applications.forEach((otherApp) => {
+            if (
+              Number(otherApp.job_id) === Number(job.id) &&
+              Number(otherApp.id) !== Number(app.id) &&
+              otherApp.status !== 'Accepted' &&
+              otherApp.status !== 'Rejected'
+            ) {
+              otherApp.status = 'Rejected';
+              otherApp.auto_rejected = true;
+              otherApp.rejected_reason = 'All vacancies filled';
+              autoRejectedApplicants.push({
+                application_id: otherApp.id,
+                student_id: otherApp.student_id,
+                student_name: otherApp.student_name,
+                job_id: job.id,
+                job_title: job.title,
+              });
+            }
+          });
+        }
+        saveStoredJobs(jobs);
       }
+
+      app.status = newStatus;
+      saveStoredApplications(applications);
 
       return {
         message: `Application ${newStatus.toLowerCase()} successfully.`,
         autoPaused,
         vacancies: remainingVacancies,
+        autoRejectedApplicants,
       };
     }),
 
@@ -565,6 +708,7 @@ const mockApi = {
     asyncWrap(() => {
       jobs = loadStoredJobs();
       const { recruiterId, title, type, location, hours, pay, vacancies, description } = jobData;
+      const parsedVacancies = vacancies !== undefined ? Math.max(0, Number(vacancies)) : 1;
       const newJob = {
         id: Date.now(),
         recruiter_id: Number(recruiterId),
@@ -573,9 +717,9 @@ const mockApi = {
         location: location.trim(),
         hours,
         pay: pay.trim(),
-        vacancies: vacancies !== undefined ? Number(vacancies) : 1,
+        vacancies: parsedVacancies,
         description: description.trim(),
-        status: 'Active',
+        status: parsedVacancies === 0 ? 'Paused' : 'Active',
         created_at: new Date().toISOString(),
       };
       jobs.unshift(newJob);
@@ -588,6 +732,10 @@ const mockApi = {
       jobs = loadStoredJobs();
       const job = jobs.find((j) => Number(j.id) === Number(jobId));
       if (!job) throw new Error('Job not found.');
+      const vac = job.vacancies !== undefined ? Number(job.vacancies) : 1;
+      if (status === 'Active' && vac <= 0) {
+        throw new Error('Cannot activate listing with 0 vacancies. Vacancies must be greater than 0.');
+      }
       job.status = status;
       saveStoredJobs(jobs);
       return { message: 'Job updated.' };
