@@ -101,6 +101,12 @@ const loadStoredStudents = () => {
   return [...INITIAL_STUDENTS];
 };
 
+const saveStoredStudents = (items) => {
+  try {
+    localStorage.setItem('kairos_students', JSON.stringify(items));
+  } catch {}
+};
+
 const loadStoredRecruiters = () => {
   try {
     const raw = localStorage.getItem('kairos_recruiters');
