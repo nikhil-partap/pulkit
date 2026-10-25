@@ -5,7 +5,6 @@ import Navbar from '../components/Navbar';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { useNotifications } from '../context/NotificationContext';
-import ConfirmationModal from '../components/ConfirmationModal';
 
 export default function JobDetailsPage() {
   const { jobId } = useParams();
@@ -18,8 +17,6 @@ export default function JobDetailsPage() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   const handleBack = (e) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -91,14 +88,8 @@ export default function JobDetailsPage() {
     }
   };
 
-  const handleWithdrawClick = () => {
+  const handleWithdraw = async () => {
     if (!application || isAccepted) return;
-    setShowWithdrawModal(true);
-  };
-
-  const confirmWithdraw = async () => {
-    if (!application) return;
-    setIsWithdrawing(true);
     try {
       await api.withdrawApplication(job.id, user.id);
       setApplication(null);
@@ -122,12 +113,9 @@ export default function JobDetailsPage() {
           recipient: { role: 'Recruiter', id: job.recruiter_id },
         });
       }
-      setShowWithdrawModal(false);
       await load();
     } catch (error) {
       setMessage(error.message || 'Could not withdraw the application.');
-    } finally {
-      setIsWithdrawing(false);
     }
   };
 
@@ -210,7 +198,7 @@ export default function JobDetailsPage() {
                     <XCircle size={17} /> Application rejected
                   </button>
                 ) : application ? (
-                  <button type="button" className="detail-apply" onClick={handleWithdrawClick}>
+                  <button type="button" className="detail-apply" onClick={handleWithdraw}>
                     Withdraw application
                   </button>
                 ) : isPaused ? (
@@ -316,18 +304,6 @@ export default function JobDetailsPage() {
           </>
         )}
       </main>
-
-      <ConfirmationModal
-        isOpen={showWithdrawModal}
-        title="Withdraw Application"
-        message="Are you sure you want to withdraw your application?"
-        subMessage="Your application will be removed from recruiter review."
-        confirmText="Yes, withdraw"
-        cancelText="Cancel"
-        isLoading={isWithdrawing}
-        onConfirm={confirmWithdraw}
-        onCancel={() => setShowWithdrawModal(false)}
-      />
     </div>
   );
 }

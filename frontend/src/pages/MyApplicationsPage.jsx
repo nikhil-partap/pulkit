@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bookmark, BriefcaseBusiness, CheckCircle2, Clock3, FileText, MapPin, RefreshCw, XCircle } from 'lucide-react';
 import { api } from '../services/api';
-import ConfirmationModal from '../components/ConfirmationModal';
 
 const tabs = [
   { id: 'applied', label: 'Applied', icon: FileText },
@@ -18,8 +17,6 @@ export default function MyApplicationsPage({ user, onNavigate }) {
   const [sortBy, setSortBy] = useState('newest');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [withdrawTarget, setWithdrawTarget] = useState(null);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -52,17 +49,12 @@ export default function MyApplicationsPage({ user, onNavigate }) {
     };
   }, [user.id]);
 
-  const confirmWithdraw = async () => {
-    if (!withdrawTarget) return;
-    setIsWithdrawing(true);
+  const handleWithdraw = async (jobId) => {
     try {
-      await api.withdrawApplication(withdrawTarget.jobId, user.id);
-      setWithdrawTarget(null);
+      await api.withdrawApplication(jobId, user.id);
       await load();
     } catch (err) {
       alert(err.message || 'Could not withdraw application.');
-    } finally {
-      setIsWithdrawing(false);
     }
   };
 
@@ -188,13 +180,7 @@ export default function MyApplicationsPage({ user, onNavigate }) {
                     {item.status === 'Applied' && (
                       <button
                         type="button"
-                        onClick={() =>
-                          setWithdrawTarget({
-                            jobId: item.job_id,
-                            isAccepted: false,
-                            jobTitle: item.job_title || item.title || 'Role',
-                          })
-                        }
+                        onClick={() => handleWithdraw(item.job_id || item.id)}
                         style={{
                           background: 'none',
                           border: '1px solid rgba(239, 68, 68, 0.4)',
@@ -233,18 +219,6 @@ export default function MyApplicationsPage({ user, onNavigate }) {
           </div>
         )}
       </section>
-
-      <ConfirmationModal
-        isOpen={Boolean(withdrawTarget)}
-        title="Withdraw Application"
-        message="Are you sure you want to withdraw your application?"
-        subMessage={`Your application for "${withdrawTarget?.jobTitle || 'this role'}" will be removed from recruiter review.`}
-        confirmText="Yes, withdraw"
-        cancelText="Cancel"
-        isLoading={isWithdrawing}
-        onConfirm={confirmWithdraw}
-        onCancel={() => setWithdrawTarget(null)}
-      />
     </main>
   );
 }
