@@ -8,12 +8,14 @@ import { useNotifications } from '../context/NotificationContext';
 import { PlusCircle, Filter, ArrowRight, RefreshCw, Users, CheckCircle2, XCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { changeJobStatus, createJob, deleteJob, loadRecruiterJobs } from '../store/jobsSlice';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 
 export default function RecruiterDashboard() {
   const { user } = useAuth();
   const dispatch = useDispatch();
   const { addNotification } = useNotifications();
+  const routeLocation = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const jobs = useSelector((state) => state.jobs.recruiter);
   const [applications, setApplications] = useState([]);
   const [activeOnly, setActiveOnly] = useState(false);
@@ -21,7 +23,20 @@ export default function RecruiterDashboard() {
   const [postingLoading, setPostingLoading] = useState(false);
   const [jobMessage, setJobMessage] = useState('');
   const [isJobError, setIsJobError] = useState(false);
-  const [activePage, setActivePage] = useState('listings');
+  const initialTab = searchParams.get('tab') || searchParams.get('page') || routeLocation.state?.activePage || 'listings';
+  const [activePage, setActivePage] = useState(initialTab);
+
+  useEffect(() => {
+    const pageFromUrl = searchParams.get('tab') || searchParams.get('page') || routeLocation.state?.activePage;
+    if (pageFromUrl && pageFromUrl !== activePage) {
+      setActivePage(pageFromUrl);
+    }
+  }, [searchParams, routeLocation.state]);
+
+  const handlePageChange = (page) => {
+    setActivePage(page);
+    setSearchParams(page === 'listings' ? {} : { tab: page });
+  };
 
   // Form State
   const [title, setTitle] = useState('');
@@ -393,7 +408,7 @@ export default function RecruiterDashboard() {
                   <small>{app.student_college || app.student_email || ''}</small>
                 </div>
                 <div className="recruiter-applicant-actions">
-                  <Link to={`/students/${app.student_id}`} state={{ from: 'recruiter', fromName: 'Applicants' }} className="view-applicant-portfolio">View portfolio</Link>
+                  <Link to={`/students/${app.student_id}`} state={{ from: '/recruiter?tab=applicants', fromName: 'Applicants', activePage: 'applicants' }} className="view-applicant-portfolio">View portfolio</Link>
                   <span className={`application-status-badge ${(app.status || 'applied').toLowerCase()}`}>
                     {app.status || 'Applied'}
                   </span>
@@ -438,7 +453,7 @@ export default function RecruiterDashboard() {
       <Navbar workspaceLabel="Recruiter workspace" />
 
       <div className="recruiter-workspace-layout">
-        <RecruiterSidebar activePage={activePage} onChange={setActivePage} pendingCount={pendingApplicants} />
+        <RecruiterSidebar activePage={activePage} onChange={handlePageChange} pendingCount={pendingApplicants} />
         {pageMap[activePage] || ListingsAndPostView}
       </div>
     </div>

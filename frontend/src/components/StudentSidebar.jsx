@@ -27,6 +27,18 @@ export default function StudentSidebar({ activePage, onChange }) {
       .catch(() => setNeedsPortfolio(false));
   }, [user.id]);
 
+  const pageLabels = {
+    jobs: 'Job opportunities',
+    skills: 'Skill Exchange',
+    applications: 'My applications',
+    'booked-sessions': 'Booked sessions',
+    'create-session': 'Create session',
+    'my-sessions': 'My sessions',
+  };
+  const returnPath = activePage && activePage !== 'jobs' ? `/student?tab=${activePage}` : '/student';
+  const returnName = pageLabels[activePage] || 'workspace';
+  const navState = { from: returnPath, fromName: returnName, activePage };
+
   return (
     <aside className="student-sidebar" aria-label="Student workspace navigation">
       <p className="student-sidebar-label">WORKSPACE</p>
@@ -39,13 +51,13 @@ export default function StudentSidebar({ activePage, onChange }) {
         <button type="button" className={activePage === 'my-sessions' ? 'active' : ''} onClick={() => onChange('my-sessions')}><Presentation size={18} /><span>My sessions</span><ChevronRight size={15} /></button>
       </nav>
       <div className="student-sidebar-note"><LayoutDashboard size={17} /><p><strong>More coming soon</strong><br />Applications and your profile will appear here.</p></div>
-      {needsPortfolio && <button type="button" className="complete-portfolio-nudge" onClick={() => navigate('/portfolio/edit')}><FilePenLine size={16} /><span><strong>Complete your portfolio</strong><small>Add skills or a first project</small></span></button>}
+      {needsPortfolio && <button type="button" className="complete-portfolio-nudge" onClick={() => navigate('/portfolio/edit', { state: navState })}><FilePenLine size={16} /><span><strong>Complete your portfolio</strong><small>Add skills or a first project</small></span></button>}
       <div className="student-sidebar-settings">
         <button type="button" className={settingsOpen ? 'sidebar-settings-trigger active' : 'sidebar-settings-trigger'} onClick={() => setSettingsOpen((open) => !open)} aria-expanded={settingsOpen}><Settings size={18} /><span>Settings</span><ChevronDown size={15} /></button>
         {settingsOpen && <div className="sidebar-settings-menu">
-          <button type="button" onClick={() => navigate('/settings')}><Settings size={15} /> Account</button>
-          <button type="button" onClick={() => navigate('/portfolio/edit')}><FilePenLine size={15} /> Edit portfolio</button>
-          <button type="button" onClick={() => navigate('/profile')}><UserRound size={15} /> View portfolio</button>
+          <button type="button" onClick={() => navigate('/settings', { state: navState })}><Settings size={15} /> Account</button>
+          <button type="button" onClick={() => navigate('/portfolio/edit', { state: navState })}><FilePenLine size={15} /> Edit portfolio</button>
+          <button type="button" onClick={() => navigate('/profile', { state: navState })}><UserRound size={15} /> View portfolio</button>
           <div className="sidebar-theme-row">
             <button type="button" className={`sidebar-theme-option${theme === 'light' ? ' active' : ''}`} onClick={() => setTheme('light')} aria-pressed={theme === 'light'}><Sun size={13} /> Light</button>
             <button type="button" className={`sidebar-theme-option${theme === 'dark' ? ' active' : ''}`} onClick={() => setTheme('dark')} aria-pressed={theme === 'dark'}><Moon size={13} /> Dark</button>

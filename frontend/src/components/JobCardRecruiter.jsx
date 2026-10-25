@@ -123,7 +123,7 @@ export default function JobCardRecruiter({
                       <Mail size={12} style={{ marginRight: '4px' }} />
                       Email
                     </a>
-                    <Link to={`/students/${app.student_id}`} state={{ from: 'recruiter', fromName: 'Recruiter' }} className="view-applicant-portfolio">View portfolio</Link>
+                    <Link to={`/students/${app.student_id}`} state={{ from: '/recruiter?tab=listings', fromName: 'My listings', activePage: 'listings' }} className="view-applicant-portfolio">View portfolio</Link>
                   </div>
                 </div>
               );

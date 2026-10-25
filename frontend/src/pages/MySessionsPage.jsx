@@ -100,24 +100,27 @@ export default function MySessionsPage({ user, onNavigate }) {
         })
       ).unwrap();
 
-      const sessionAttendees = attendees[linkModalSession.id] || [];
+      let sessionAttendees = attendees[linkModalSession.id];
+      if (!sessionAttendees || !sessionAttendees.length) {
+        try {
+          sessionAttendees = await api.getSkillSessionBookings(linkModalSession.id, user.id);
+        } catch {
+          sessionAttendees = [];
+        }
+      }
 
-      // 1. Push notification to all booked learners
-      sessionAttendees.forEach((attendee) => {
-        addNotification({
-          title: `Meeting link shared! 🎥`,
-          body: `${user.name || 'Your mentor'} posted the meeting link for "${linkModalSession.title}". Join via your Booked Sessions.`,
-          type: 'session',
-          recipient: { role: 'Student', id: attendee.studentId },
+      // 1. Push notification only to booked learners (not to the host providing the link)
+      sessionAttendees
+        .filter((attendee) => Number(attendee.studentId) !== Number(user.id))
+        .forEach((attendee) => {
+          addNotification({
+            title: 'Meeting link is provided, join fast!',
+            body: `Meeting link is provided for "${linkModalSession.title}". Join fast!`,
+            type: 'session',
+            meetingLink: trimmed,
+            recipient: { role: 'Student', id: attendee.studentId },
+          });
         });
-      });
-
-      // 2. Push confirmation notification to the teacher
-      addNotification({
-        title: 'Meeting link published',
-        body: `Meeting link shared with ${sessionAttendees.length} booked learner${sessionAttendees.length === 1 ? '' : 's'}.`,
-        type: 'session',
-      });
 
       window.dispatchEvent(new Event('kairos_sessions_updated'));
       setMessage(`Meeting link published and pushed to ${sessionAttendees.length} booked learner${sessionAttendees.length === 1 ? '' : 's'}.`);
@@ -200,7 +203,11 @@ export default function MySessionsPage({ user, onNavigate }) {
                           <UsersRound size={14} /> Booked learners ({sessionLearners.length})
                         </strong>
                         {sessionLearners.map((attendee) => (
-                          <Link key={attendee.bookingId} to={`/students/${attendee.studentId}`}>
+                          <Link
+                            key={attendee.bookingId}
+                            to={`/students/${attendee.studentId}`}
+                            state={{ from: '/student?tab=my-sessions', fromName: 'My sessions', activePage: 'my-sessions' }}
+                          >
                             <span>{attendee.name}</span>
                             <small>{attendee.course} · {attendee.college}</small>
                             <b>View portfolio</b>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Building2, GraduationCap, Save } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
@@ -9,6 +9,7 @@ const emptyProfile = { name: '', email: '', college: '', course: '', availabilit
 export default function SettingsPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState(emptyProfile);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -16,6 +17,19 @@ export default function SettingsPage() {
   const [isError, setIsError] = useState(false);
   const homePath = user?.role === 'Recruiter' ? '/recruiter' : '/student';
   const isRecruiter = user?.role === 'Recruiter';
+
+  const handleBack = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (location.state?.from && typeof location.state.from === 'string' && location.state.from.startsWith('/')) {
+      navigate(location.state.from, { state: { activePage: location.state.activePage } });
+      return;
+    }
+    if (window.history.state && typeof window.history.state.idx === 'number' && window.history.state.idx > 0) {
+      navigate(-1);
+      return;
+    }
+    navigate(homePath);
+  };
 
   const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 
@@ -66,7 +80,7 @@ export default function SettingsPage() {
         <img src={`${import.meta.env.BASE_URL}favicon.png`} alt="Kairos" className="dashboard-brand-logo-img" />
         <span>Kairos<span className="brand-dot">.</span></span>
       </Link>
-      <button type="button" className="settings-back-btn" onClick={() => navigate(homePath)}><ArrowLeft size={16} />Back to workspace</button>
+      <button type="button" className="settings-back-btn" onClick={handleBack}><ArrowLeft size={16} />{location.state?.fromName ? `Back to ${location.state.fromName}` : 'Back to workspace'}</button>
     </header>
     <main className="settings-content">
       <section className="settings-intro">

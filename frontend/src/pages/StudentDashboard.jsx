@@ -43,7 +43,7 @@ export default function StudentDashboard() {
       return;
     }
     setActivePage(page);
-    setSearchParams(page === 'jobs' ? {} : { tab: page }, { replace: true });
+    setSearchParams(page === 'jobs' ? {} : { tab: page });
   };
 
   const firstName = user?.name ? user.name.split(' ')[0] : 'Student';

@@ -44,7 +44,6 @@ export default function SkillExchangePage({ firstName, user }) {
         await api.cancelSkillSessionBooking(user.id, session.id);
         setBookedIds((current) => current.filter((item) => item !== session.id));
         setBookingMessage('Booking cancelled.');
-        addNotification({ title: 'Booking cancelled', body: 'Your seat was released from the skill session.', type: 'session' });
       } else {
         if (Number(session.seats) <= 0) {
           setBookingMessage('No seats left for this session.');
@@ -53,7 +52,6 @@ export default function SkillExchangePage({ firstName, user }) {
         await api.bookSkillSession(user.id, session.id);
         setBookedIds((current) => [...current, session.id]);
         setBookingMessage('Session booked. Find it under Booked sessions.');
-        addNotification({ title: 'Session booked', body: 'Your Skill Exchange session is now in Booked sessions.', type: 'session' });
       }
       dispatch(loadSkillSessions());
     } catch (error) { setBookingMessage(error.message || 'Could not update this booking.'); }
@@ -99,7 +97,7 @@ export default function SkillExchangePage({ firstName, user }) {
                 <div className="session-card-actions">
                   <Link
                     to={`/students/${session.student_id}`}
-                    state={{ from: 'skills', fromName: 'Skill Exchange' }}
+                    state={{ from: '/student?tab=skills', fromName: 'Skill Exchange', activePage: 'skills' }}
                     className="session-view-profile-btn"
                     title={`View ${session.teacher}'s profile`}
                   >

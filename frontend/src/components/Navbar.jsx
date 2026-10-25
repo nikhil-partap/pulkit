@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Bell,
   BookOpen,
@@ -28,6 +28,7 @@ export default function Navbar({ workspaceLabel, activePage, onNavChange }) {
   const { logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [open, setOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -39,6 +40,18 @@ export default function Navbar({ workspaceLabel, activePage, onNavChange }) {
     logout();
     navigate('/login');
   };
+
+  const pageLabels = {
+    jobs: 'Job opportunities',
+    skills: 'Skill Exchange',
+    applications: 'My applications',
+    'booked-sessions': 'Booked sessions',
+    'create-session': 'Create session',
+    'my-sessions': 'My sessions',
+  };
+  const returnPath = activePage && activePage !== 'jobs' ? `/student?tab=${activePage}` : (location.pathname + location.search);
+  const returnName = pageLabels[activePage] || 'workspace';
+  const navState = { from: returnPath, fromName: returnName, activePage };
 
   useEffect(() => {
     const close = (event) => {
@@ -201,7 +214,7 @@ export default function Navbar({ workspaceLabel, activePage, onNavChange }) {
               type="button"
               className="drawer-link"
               onClick={() => {
-                navigate('/settings');
+                navigate('/settings', { state: navState });
                 setDrawerOpen(false);
               }}
             >
@@ -216,7 +229,7 @@ export default function Navbar({ workspaceLabel, activePage, onNavChange }) {
               type="button"
               className="drawer-link"
               onClick={() => {
-                navigate('/profile');
+                navigate('/profile', { state: navState });
                 setDrawerOpen(false);
               }}
             >
@@ -231,7 +244,7 @@ export default function Navbar({ workspaceLabel, activePage, onNavChange }) {
               type="button"
               className="drawer-link"
               onClick={() => {
-                navigate('/portfolio/edit');
+                navigate('/portfolio/edit', { state: navState });
                 setDrawerOpen(false);
               }}
             >
