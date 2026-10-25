@@ -93,9 +93,31 @@ const saveStoredBookings = (bookings) => {
   } catch {}
 };
 
+const loadStoredStudents = () => {
+  try {
+    const raw = localStorage.getItem('kairos_students');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [...INITIAL_STUDENTS];
+};
+
+const loadStoredRecruiters = () => {
+  try {
+    const raw = localStorage.getItem('kairos_recruiters');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [...INITIAL_RECRUITERS];
+};
+
+const saveStoredRecruiters = (items) => {
+  try {
+    localStorage.setItem('kairos_recruiters', JSON.stringify(items));
+  } catch {}
+};
+
 // In-Memory Store
-let students = [...INITIAL_STUDENTS];
-let recruiters = [...INITIAL_RECRUITERS];
+let students = loadStoredStudents();
+let recruiters = loadStoredRecruiters();
 let jobs = loadStoredJobs();
 let applications = loadStoredApplications();
 let savedJobs = [];
@@ -137,14 +159,18 @@ const mockApi = {
       const { name, email, password, role, college, course, availability, company, jobTitle, industry } = userData;
       const normalizedEmail = (email || '').trim().toLowerCase();
       if (role === 'Student') {
+        students = loadStoredStudents();
         if (students.some((s) => s.email.toLowerCase() === normalizedEmail)) throw new Error('Email already registered.');
-        const newStudent = { id: Date.now(), full_name: name.trim(), email: normalizedEmail, password, college: college?.trim(), course: course?.trim(), availability };
+        const newStudent = { id: Date.now(), full_name: name.trim(), email: normalizedEmail, password, college: college?.trim() || '', course: course?.trim() || '', availability: availability || '' };
         students.push(newStudent);
+        saveStoredStudents(students);
         return { id: newStudent.id, name: newStudent.full_name, email: newStudent.email, role: 'Student', company: '' };
       } else {
+        recruiters = loadStoredRecruiters();
         if (recruiters.some((r) => r.email.toLowerCase() === normalizedEmail)) throw new Error('Email already registered.');
-        const newRecruiter = { recruiter_id: Date.now(), full_name: name.trim(), email: normalizedEmail, password, company_name: company?.trim(), job_title: jobTitle?.trim(), industry };
+        const newRecruiter = { recruiter_id: Date.now(), full_name: name.trim(), email: normalizedEmail, password, company_name: company?.trim() || '', job_title: jobTitle?.trim() || '', industry: industry || '' };
         recruiters.push(newRecruiter);
+        saveStoredRecruiters(recruiters);
         return { id: newRecruiter.recruiter_id, name: newRecruiter.full_name, email: newRecruiter.email, role: 'Recruiter', company: newRecruiter.company_name };
       }
     }),
@@ -153,10 +179,13 @@ const mockApi = {
     asyncWrap(() => {
       const normalizedEmail = (email || '').trim().toLowerCase();
       if (!newPassword || newPassword !== confirmPassword) throw new Error('Passwords do not match.');
-      const list = role === 'Student' ? students : recruiters;
+      const isStudent = role === 'Student';
+      const list = isStudent ? loadStoredStudents() : loadStoredRecruiters();
       const user = list.find((u) => u.email.toLowerCase() === normalizedEmail);
       if (!user) throw new Error('Account not found with this email.');
       user.password = newPassword;
+      if (isStudent) saveStoredStudents(list);
+      else saveStoredRecruiters(list);
       return { success: true, message: 'Password reset successfully.' };
     }),
 
@@ -164,10 +193,12 @@ const mockApi = {
   getProfile: async (userId, role) =>
     asyncWrap(() => {
       if (role === 'Student') {
+        students = loadStoredStudents();
         const s = students.find((item) => Number(item.id) === Number(userId));
         if (!s) throw new Error('Student not found.');
         return { name: s.full_name, email: s.email, college: s.college, course: s.course, availability: s.availability };
       } else {
+        recruiters = loadStoredRecruiters();
         const r = recruiters.find((item) => Number(item.recruiter_id) === Number(userId));
         if (!r) throw new Error('Recruiter not found.');
         return { name: r.full_name, email: r.email, company: r.company_name, jobTitle: r.job_title, industry: r.industry };
@@ -176,24 +207,79 @@ const mockApi = {
 
   getStudentPortfolio: async (studentId) =>
     asyncWrap(() => {
-      const student = students.find((item) => Number(item.id) === Number(studentId));
-      if (!student) throw new Error('Student profile not found.');
+      students = loadStoredStudents();
+      let student = students.find((item) => Number(item.id) === Number(studentId));
+      if (!student) {
+        applications = loadStoredApplications();
+        const app = applications.find((a) => Number(a.student_id) === Number(studentId));
+        if (app) {
+          student = {
+            id: studentId,
+            full_name: app.student_name || 'Student Applicant',
+            email: app.student_email || '',
+            college: app.college || '',
+            course: app.course || '',
+          };
+        } else {
+          sessionBookings = loadStoredBookings();
+          const booking = sessionBookings.find((b) => Number(b.student_id) === Number(studentId));
+          if (booking) {
+            student = {
+              id: studentId,
+              full_name: booking.name || 'Student Attendee',
+              email: '',
+              college: booking.college || '',
+              course: booking.course || '',
+            };
+          } else {
+            skillSessions = loadStoredSessions();
+            const sess = skillSessions.find((s) => Number(s.student_id) === Number(studentId));
+            if (sess) {
+              student = {
+                id: studentId,
+                full_name: sess.teacher || 'Student Host',
+                email: '',
+                college: '',
+                course: '',
+              };
+            }
+          }
+        }
+      }
+      if (!student) {
+        student = {
+          id: studentId,
+          full_name: 'Student',
+          email: '',
+          college: '',
+          course: '',
+        };
+      }
       return {
-        id: student.id, name: student.full_name, email: student.email, college: student.college, course: student.course,
-        availability: student.availability, bio: student.bio || 'This student has not added a bio yet.', skills: student.skills || [],
-        resumeLabel: student.resume_label || 'Resume available on request', projects: student.projects || [],
+        id: student.id,
+        name: student.full_name || 'Student',
+        email: student.email || '',
+        college: student.college || '',
+        course: student.course || '',
+        availability: student.availability || '',
+        bio: student.bio || '',
+        skills: Array.isArray(student.skills) ? student.skills : [],
+        resumeLabel: student.resume_label || '',
+        projects: Array.isArray(student.projects) ? student.projects : [],
         resumeFile: uploadedResumes.get(Number(student.id)) || null,
       };
     }),
 
   updateStudentPortfolio: async (studentId, portfolio) =>
     asyncWrap(() => {
+      students = loadStoredStudents();
       const student = students.find((item) => Number(item.id) === Number(studentId));
       if (!student) throw new Error('Student profile not found.');
       student.bio = portfolio.bio.trim();
       student.skills = portfolio.skills;
       student.resume_label = portfolio.resumeLabel.trim();
       student.projects = portfolio.projects;
+      saveStoredStudents(students);
       return { success: true };
     }),
 
@@ -201,24 +287,30 @@ const mockApi = {
     asyncWrap(() => {
       if (!file) throw new Error('Choose a resume file first.');
       if (file.size > 5 * 1024 * 1024) throw new Error('Resume must be 5 MB or smaller.');
+      students = loadStoredStudents();
       const student = students.find((item) => Number(item.id) === Number(studentId));
       if (!student) throw new Error('Student profile not found.');
       uploadedResumes.set(Number(studentId), file);
       student.resume_label = file.name;
+      saveStoredStudents(students);
       return { name: file.name };
     }),
 
   updateProfile: async ({ userId, role, profile }) =>
     asyncWrap(() => {
       if (role === 'Student') {
+        students = loadStoredStudents();
         const s = students.find((item) => Number(item.id) === Number(userId));
         if (!s) throw new Error('Student not found.');
         Object.assign(s, { full_name: profile.name, email: profile.email, college: profile.college, course: profile.course, availability: profile.availability });
+        saveStoredStudents(students);
         return { id: s.id, name: s.full_name, email: s.email, role: 'Student', company: '' };
       } else {
+        recruiters = loadStoredRecruiters();
         const r = recruiters.find((item) => Number(item.recruiter_id) === Number(userId));
         if (!r) throw new Error('Recruiter not found.');
         Object.assign(r, { full_name: profile.name, email: profile.email, company_name: profile.company, job_title: profile.jobTitle, industry: profile.industry });
+        saveStoredRecruiters(recruiters);
         return { id: r.recruiter_id, name: r.full_name, email: r.email, role: 'Recruiter', company: r.company_name };
       }
     }),
@@ -228,6 +320,7 @@ const mockApi = {
     asyncWrap(() => {
       jobs = loadStoredJobs();
       applications = loadStoredApplications();
+      recruiters = loadStoredRecruiters();
       const studentAppliedJobIds = studentId
         ? new Set(applications.filter((a) => Number(a.student_id) === Number(studentId)).map((a) => Number(a.job_id)))
         : new Set();
@@ -258,18 +351,42 @@ const mockApi = {
 
   getRecruiterCompanyProfile: async (recruiterId) =>
     asyncWrap(() => {
-      const recruiter = recruiters.find((item) => Number(item.recruiter_id) === Number(recruiterId));
-      if (!recruiter) throw new Error('Company profile not found.');
+      recruiters = loadStoredRecruiters();
+      jobs = loadStoredJobs();
+      let recruiter = recruiters.find((item) => Number(item.recruiter_id) === Number(recruiterId));
+      if (!recruiter) {
+        const relatedJob = jobs.find((job) => Number(job.recruiter_id) === Number(recruiterId));
+        if (relatedJob) {
+          recruiter = {
+            recruiter_id: Number(recruiterId),
+            company_name: relatedJob.company || '',
+            full_name: relatedJob.recruiter_name || '',
+            job_title: relatedJob.recruiter_role || '',
+            email: relatedJob.recruiter_email || '',
+            industry: relatedJob.industry || '',
+          };
+        }
+      }
+      if (!recruiter) {
+        recruiter = {
+          recruiter_id: Number(recruiterId),
+          company_name: '',
+          full_name: '',
+          job_title: '',
+          email: '',
+          industry: '',
+        };
+      }
       const activeRoles = jobs
         .filter((job) => Number(job.recruiter_id) === Number(recruiterId) && job.status === 'Active')
         .map((job) => ({ id: job.id, title: job.title, type: job.work_type, location: job.location, hours: job.hours, pay: job.pay }));
       return {
         id: recruiter.recruiter_id,
-        company: recruiter.company_name,
-        industry: recruiter.industry || 'Other',
-        contactName: recruiter.full_name,
-        contactRole: recruiter.job_title || 'Recruiter',
-        email: recruiter.email,
+        company: recruiter.company_name || '',
+        industry: recruiter.industry || '',
+        contactName: recruiter.full_name || '',
+        contactRole: recruiter.job_title || '',
+        email: recruiter.email || '',
         activeRoles,
       };
     }),
@@ -294,12 +411,30 @@ const mockApi = {
   applyForJob: async (jobId, studentId) =>
     asyncWrap(() => {
       applications = loadStoredApplications();
+      students = loadStoredStudents();
+      const student = students.find((s) => Number(s.id) === Number(studentId));
       const existing = applications.find((a) => Number(a.job_id) === Number(jobId) && Number(a.student_id) === Number(studentId));
       if (!existing) {
-        applications.push({ id: Date.now(), job_id: Number(jobId), student_id: Number(studentId), status: 'Applied', created_at: new Date().toISOString() });
+        applications.push({
+          id: Date.now(),
+          job_id: Number(jobId),
+          student_id: Number(studentId),
+          student_name: student?.full_name || 'Student',
+          student_email: student?.email || '',
+          college: student?.college || '',
+          course: student?.course || '',
+          status: 'Applied',
+          created_at: new Date().toISOString()
+        });
       } else {
         existing.status = 'Applied';
         existing.created_at = new Date().toISOString();
+        if (student) {
+          existing.student_name = student.full_name;
+          existing.student_email = student.email;
+          existing.college = student.college;
+          existing.course = student.course;
+        }
       }
       saveStoredApplications(applications);
       return { message: 'Applied successfully.' };
@@ -361,6 +496,7 @@ const mockApi = {
     asyncWrap(() => {
       applications = loadStoredApplications();
       jobs = loadStoredJobs();
+      students = loadStoredStudents();
       const recruiterJobIds = new Set(jobs.filter((j) => Number(j.recruiter_id) === Number(recruiterId)).map((j) => Number(j.id)));
       return applications
         .filter((a) => recruiterJobIds.has(Number(a.job_id)))
@@ -374,10 +510,10 @@ const mockApi = {
             status: app.status || 'Applied',
             applied_at: 'recently',
             student_id: student.id || app.student_id,
-            student_name: student.full_name || 'Student Applicant',
-            student_email: student.email || '',
-            college: student.college || 'College',
-            course: student.course || 'Degree',
+            student_name: student.full_name || app.student_name || 'Student Applicant',
+            student_email: student.email || app.student_email || '',
+            college: student.college || app.college || '',
+            course: student.course || app.course || '',
             availability: student.availability || 'Flexible',
           };
         });
