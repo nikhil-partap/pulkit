@@ -78,7 +78,7 @@ export default function CompanyProfilePage() {
                 <p className="small-heading">VERIFIED EMPLOYER</p>
                 <h1>{companyName}</h1>
                 <p>
-                  {industry} · {activeRoles.length} live opportunity{activeRoles.length === 1 ? '' : 'ies'}
+                  {industry} · {activeRoles.length} live {activeRoles.length === 1 ? 'opportunity' : 'opportunities'}
                 </p>
               </div>
             </section>
