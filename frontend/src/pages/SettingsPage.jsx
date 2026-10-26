@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Building2, GraduationCap, Save } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { COLLEGE_SUGGESTIONS, COURSE_SUGGESTIONS } from '../services/academicOptions';
 
 const emptyProfile = { name: '', email: '', college: '', course: '', availability: 'Weekdays', company: '', jobTitle: '', industry: '' };
 
@@ -103,8 +104,10 @@ export default function SettingsPage() {
             </div>
           </div> : <div className="settings-form-section"><h2>Academic details</h2>
             <div className="settings-field-grid">
-              <label>College or university<input value={profile.college} onChange={(event) => updateField('college', event.target.value)} required /></label>
-              <label>Course<input value={profile.course} onChange={(event) => updateField('course', event.target.value)} required /></label>
+              <label>College or university<input name="college" list="settingsCollegeSuggestions" autoComplete="on" value={profile.college} onChange={(event) => updateField('college', event.target.value)} required /></label>
+              <label>Course<input name="course" list="settingsCourseSuggestions" autoComplete="on" value={profile.course} onChange={(event) => updateField('course', event.target.value)} required /></label>
+              <datalist id="settingsCollegeSuggestions">{COLLEGE_SUGGESTIONS.map((option) => <option key={option} value={option} />)}</datalist>
+              <datalist id="settingsCourseSuggestions">{COURSE_SUGGESTIONS.map((option) => <option key={option} value={option} />)}</datalist>
               <label>Availability<select value={profile.availability} onChange={(event) => updateField('availability', event.target.value)}><option>Weekdays</option><option>Weekends</option><option>Both</option></select></label>
             </div>
           </div>}

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { useTheme } from '../context/ThemeContext';
+import SignOutOverlay from './SignOutOverlay';
 
 export default function StudentSidebar({ activePage, onChange }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -12,14 +13,6 @@ export default function StudentSidebar({ activePage, onChange }) {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const signOut = () => { logout(); navigate('/login'); };
-
-  useEffect(() => {
-    const handleShortcut = (event) => {
-      if (event.ctrlKey && event.key.toLowerCase() === 'b') { event.preventDefault(); signOut(); }
-    };
-    window.addEventListener('keydown', handleShortcut);
-    return () => window.removeEventListener('keydown', handleShortcut);
-  }, []);
 
   useEffect(() => {
     api.getStudentPortfolio(user.id)
@@ -65,6 +58,7 @@ export default function StudentSidebar({ activePage, onChange }) {
           <button type="button" className="sidebar-logout" onClick={signOut}><LogOut size={15} /> Log out <small>Ctrl + B</small></button>
         </div>}
       </div>
+      <SignOutOverlay name={user.name} onConfirm={signOut} />
     </aside>
   );
 }

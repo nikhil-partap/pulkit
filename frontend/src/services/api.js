@@ -1,4 +1,5 @@
 // In-Memory Mock Service for Kairos (State-driven for React evaluations)
+import { isStrongPassword, PASSWORD_REQUIREMENT_MESSAGE } from './passwordRules';
 
 const INITIAL_STUDENTS = [
   { id: 1, full_name: 'Rahul Sharma', email: 'rahul@example.com', password: 'password123', college: 'Chitkara University, Punjab Campus', course: 'BCA', availability: 'Weekdays', bio: 'Frontend-focused BCA student who enjoys turning ideas into useful, accessible interfaces. Currently building experience through part-time roles and peer learning.', skills: ['React', 'JavaScript', 'CSS', 'Figma', 'Git'], resume_label: 'Rahul_Sharma_Resume.pdf', projects: [{ title: 'Campus event finder', stack: 'React · REST API', description: 'A responsive student event discovery app with search and category filters.', repoUrl: 'https://github.com/', liveUrl: '' }, { title: 'Cafe ordering interface', stack: 'HTML · CSS · JavaScript', description: 'A mobile-first ordering flow designed for quick counter pickups.', repoUrl: '', liveUrl: '' }] },
@@ -178,11 +179,14 @@ const mockApi = {
   login: async ({ email, password, role, company = '' }) =>
     asyncWrap(() => {
       const normalizedEmail = (email || '').trim().toLowerCase();
+      if (!password || !password.trim()) throw new Error('Invalid email or password.');
       if (role === 'Student') {
+        students = loadStoredStudents();
         const student = students.find((s) => s.email.toLowerCase() === normalizedEmail);
         if (!student || student.password !== password) throw new Error('Invalid email or password.');
         return { id: student.id, name: student.full_name, email: student.email, role: 'Student', company: '' };
       } else {
+        recruiters = loadStoredRecruiters();
         const recruiter = recruiters.find((r) => r.email.toLowerCase() === normalizedEmail);
         if (!recruiter || recruiter.password !== password || recruiter.company_name.trim().toLowerCase() !== company.trim().toLowerCase()) {
           throw new Error('Invalid email, password, or company name.');
@@ -195,6 +199,7 @@ const mockApi = {
     asyncWrap(() => {
       const { name, email, password, role, college, course, availability, company, jobTitle, industry } = userData;
       const normalizedEmail = (email || '').trim().toLowerCase();
+      if (!isStrongPassword(password)) throw new Error(PASSWORD_REQUIREMENT_MESSAGE);
       if (role === 'Student') {
         students = loadStoredStudents();
         if (students.some((s) => s.email.toLowerCase() === normalizedEmail)) throw new Error('Email already registered.');
@@ -216,13 +221,19 @@ const mockApi = {
     asyncWrap(() => {
       const normalizedEmail = (email || '').trim().toLowerCase();
       if (!newPassword || newPassword !== confirmPassword) throw new Error('Passwords do not match.');
+      if (!isStrongPassword(newPassword)) throw new Error(PASSWORD_REQUIREMENT_MESSAGE);
       const isStudent = role === 'Student';
       const list = isStudent ? loadStoredStudents() : loadStoredRecruiters();
       const user = list.find((u) => u.email.toLowerCase() === normalizedEmail);
       if (!user) throw new Error('Account not found with this email.');
       user.password = newPassword;
-      if (isStudent) saveStoredStudents(list);
-      else saveStoredRecruiters(list);
+      if (isStudent) {
+        students = list;
+        saveStoredStudents(list);
+      } else {
+        recruiters = list;
+        saveStoredRecruiters(list);
+      }
       return { success: true, message: 'Password reset successfully.' };
     }),
 

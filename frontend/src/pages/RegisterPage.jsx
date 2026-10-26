@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { isStrongPassword, PASSWORD_REQUIREMENT_MESSAGE } from '../services/passwordRules';
+import PasswordChecklist from '../components/PasswordChecklist';
+import { COLLEGE_SUGGESTIONS, COURSE_SUGGESTIONS } from '../services/academicOptions';
 import { Home, Briefcase, ArrowRight, Check } from 'lucide-react';
 
 export default function RegisterPage() {
@@ -48,9 +51,9 @@ export default function RegisterPage() {
       return;
     }
 
-    if (password.length < 6) {
+    if (!isStrongPassword(password)) {
       setIsError(true);
-      setMessage('Password must be at least 6 characters.');
+      setMessage(PASSWORD_REQUIREMENT_MESSAGE);
       return;
     }
 
@@ -212,24 +215,36 @@ export default function RegisterPage() {
                 <label htmlFor="college">College or university</label>
                 <input
                   id="college"
+                  name="college"
                   type="text"
+                  list="collegeSuggestions"
+                  autoComplete="on"
                   placeholder="Example: Delhi University"
                   value={college}
                   onChange={(e) => setCollege(e.target.value)}
                   required
                 />
+                <datalist id="collegeSuggestions">
+                  {COLLEGE_SUGGESTIONS.map((option) => <option key={option} value={option} />)}
+                </datalist>
 
                 <div className="two-fields">
                   <div>
                     <label htmlFor="course">Course / degree</label>
                     <input
                       id="course"
+                      name="course"
                       type="text"
+                      list="courseSuggestions"
+                      autoComplete="on"
                       placeholder="Example: BCA"
                       value={course}
                       onChange={(e) => setCourse(e.target.value)}
                       required
                     />
+                    <datalist id="courseSuggestions">
+                      {COURSE_SUGGESTIONS.map((option) => <option key={option} value={option} />)}
+                    </datalist>
                   </div>
                   <div>
                     <label htmlFor="availability">Availability</label>
@@ -303,8 +318,8 @@ export default function RegisterPage() {
               <input
                 id="registerPassword"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="At least 6 characters"
-                minLength={6}
+                placeholder="Create a strong password"
+                aria-describedby="registerPasswordRules"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -318,6 +333,7 @@ export default function RegisterPage() {
                 {showPassword ? 'Hide' : 'Show'}
               </button>
             </div>
+            <PasswordChecklist password={password} id="registerPasswordRules" />
 
             <label className="checkbox-label" htmlFor="terms">
               <input

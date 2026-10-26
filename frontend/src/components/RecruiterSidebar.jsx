@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   BriefcaseBusiness, ChevronDown, ChevronRight,
   LogOut, Moon, Settings, Sun, UserRound, Users,
@@ -6,21 +6,14 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import SignOutOverlay from './SignOutOverlay';
 
 export default function RecruiterSidebar({ activePage, onChange, pendingCount = 0 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const signOut = () => { logout(); navigate('/login'); };
-
-  useEffect(() => {
-    const handleShortcut = (event) => {
-      if (event.ctrlKey && event.key.toLowerCase() === 'b') { event.preventDefault(); signOut(); }
-    };
-    window.addEventListener('keydown', handleShortcut);
-    return () => window.removeEventListener('keydown', handleShortcut);
-  }, []);
 
   return (
     <aside className="recruiter-sidebar" aria-label="Recruiter workspace navigation">
@@ -79,6 +72,7 @@ export default function RecruiterSidebar({ activePage, onChange, pendingCount = 
           </div>
         )}
       </div>
+      <SignOutOverlay name={user?.name} onConfirm={signOut} />
     </aside>
   );
 }

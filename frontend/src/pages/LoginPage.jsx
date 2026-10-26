@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
+import { isStrongPassword, PASSWORD_REQUIREMENT_MESSAGE } from '../services/passwordRules';
+import PasswordChecklist from '../components/PasswordChecklist';
 import { Home, Briefcase, Eye, EyeOff, ArrowRight, UserCheck, GraduationCap, Users, KeyRound, X } from 'lucide-react';
 
 export default function LoginPage() {
@@ -75,9 +77,9 @@ export default function LoginPage() {
       return;
     }
 
-    if (newPass.length < 6) {
+    if (!isStrongPassword(newPass)) {
       setForgotError(true);
-      setForgotMessage('New password must be at least 6 characters long.');
+      setForgotMessage(PASSWORD_REQUIREMENT_MESSAGE);
       return;
     }
 
@@ -120,7 +122,7 @@ export default function LoginPage() {
     setMessage('');
     setIsError(false);
 
-    if (!email || !password || (role === 'Recruiter' && !company.trim())) {
+    if (!email.trim() || !password.trim() || (role === 'Recruiter' && !company.trim())) {
       setIsError(true);
       setMessage('Please enter all required login details.');
       return;
@@ -433,7 +435,8 @@ export default function LoginPage() {
                 <input
                   id="newPass"
                   type={showNewPass ? 'text' : 'password'}
-                  placeholder="At least 6 characters"
+                  placeholder="Create a strong password"
+                  aria-describedby="newPassRules"
                   value={newPass}
                   onChange={(e) => setNewPass(e.target.value)}
                   required
@@ -446,6 +449,7 @@ export default function LoginPage() {
                   {showNewPass ? 'Hide' : 'Show'}
                 </button>
               </div>
+              <PasswordChecklist password={newPass} id="newPassRules" />
 
               <label htmlFor="confirmNewPass">Confirm New Password</label>
               <div className="password-input">
